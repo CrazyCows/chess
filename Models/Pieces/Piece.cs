@@ -11,7 +11,6 @@ public abstract class Piece
         if (IsMoveValid(targetPosition))
         {
             Position = targetPosition;
-            
         }
         else
         {
