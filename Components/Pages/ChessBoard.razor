@@ -1,0 +1,120 @@
+@page "/chessboard"
+@rendermode InteractiveServer
+
+@inject GameService GameService
+
+<div class="chessboard">
+    @for (int row = 7; row >= 0; row--)
+    {
+        <div class="row">
+            @for (int col = 0; col < 8; col++)
+            {
+                var piece = GameService.Board.Squares[row, col];
+                bool isHighlighted = validMoves.Any(m => m.x == row && m.y == col);
+                string cssClass = "square";
+                var currentRow = row; // Capture row
+                var currentCol = col; // Capture col
+                if (isHighlighted)
+                {
+                    cssClass += " highlighted";
+                }
+                else if ((row + col) % 2 == 0)
+                {
+                    cssClass += " light";
+                }
+                else
+                {
+                    cssClass += " dark";
+                }
+
+                <div class="@cssClass" @onclick="() => OnSquareClicked(currentRow, currentCol)">
+                    @if (piece != null)
+                    {
+
+                        <span class="piece">@piece.Symbol</span>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private int? selectedRow = null;
+    private int? selectedCol = null;
+    private List<(int x, int y, bool IsEnemy)> validMoves = new();
+
+
+    private void OnSquareClicked(int row, int col)
+    {
+        
+        Console.WriteLine($"square clicked: ({row}, {col})");
+        var piece = GameService.Board.Squares[row, col];
+
+        if (selectedRow == null)
+        {
+            // No piece selected yet
+            if (piece != null && piece.Color == GameService.CurrentTurn)
+            {
+                selectedRow = row;
+                selectedCol = col;
+                var moves = GameService.GetValidMoves(row, col);
+                validMoves = moves ?? new();
+            }
+
+        }
+        else
+        {
+            // Piece is selected, check if clicked square is a valid move
+            if (validMoves.Any(m => m.x == row && m.y == col))
+            {
+                // Make the move
+                GameService.MakeMove(selectedRow.Value, selectedCol.Value, row, col);
+                // Switch turn
+                GameService.CurrentTurn = GameService.CurrentTurn == "White" ? "Black" : "White";
+            }
+
+            // Clear selection and valid moves
+            selectedRow = null;
+            selectedCol = null;
+            validMoves.Clear();
+        }
+    }
+}
+
+
+<style>
+    .chessboard {
+    display: inline-block;
+    border: 2px solid black;
+}
+
+.row {
+    display: flex;
+}
+
+.square {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.light {
+    background-color: #f0d9b5;
+}
+
+.dark {
+    background-color: #b58863;
+}
+
+.highlighted {
+    background-color: yellow;
+}
+
+.piece {
+    font-size: 40px;
+}
+
+</style>

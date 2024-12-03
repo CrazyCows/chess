@@ -1,8 +1,8 @@
 namespace chess.Models.Pieces;
 
-public class Knight(string Color, int x, int y) : Piece(Color, x, y)
+public class King(string Color, int x, int y) : Piece(Color, x, y)
 {
-    public override string Symbol => Color == "White" ? "♘" : "♞";
+    public override string Symbol => Color == "White" ? "♔" : "♚";
 
     public override List<(int x, int y, bool IsEnemy)> GetValidMoves(Board board)
     {
@@ -10,8 +10,8 @@ public class Knight(string Color, int x, int y) : Piece(Color, x, y)
 
         var moves = new[]
         {
-            (2, 1), (2, -1), (-2, 1), (-2, -1),
-            (1, 2), (1, -2), (-1, 2), (-1, -2)
+            (1, 0), (-1, 0), (0, 1), (0, -1),
+            (1, 1), (-1, 1), (1, -1), (-1, -1)
         };
 
         foreach (var move in moves)
