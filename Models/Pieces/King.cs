@@ -1,12 +1,12 @@
 namespace chess.Models.Pieces;
 
-public class King(string Color, int x, int y) : Piece(Color, x, y)
+public class King(string Color) : Piece(Color)
 {
     public override string Symbol => Color == "White" ? "♔" : "♚";
 
-    public override List<(int x, int y, bool IsEnemy)> GetValidMoves(Board board)
+    public override List<(int x, int y, bool IsEnemy)> GetMoves((int x, int y) currentPosition, List<(int x, int y)> enemyPieces, List<(int x, int y)> friendlyPieces)
     {
-        List<(int x, int y, bool IsEnemy)> validList = new List<(int x, int y, bool IsEnemy)>();
+        List<(int x, int y, bool IsEnemy)> moveList = new List<(int x, int y, bool IsEnemy)>();
 
         var moves = new[]
         {
@@ -16,20 +16,26 @@ public class King(string Color, int x, int y) : Piece(Color, x, y)
 
         foreach (var move in moves)
         {
-            var newPos = GetNewPosition(move);
-            if (!IsMoveInsideBorder(move)) continue;
-
-            var piece = board.GetSquare(newPos);
-            if (piece == null)
-            {
-                validList.Add((newPos.Item1, newPos.Item2, false));
+            var newPos = GetNewPosition(move, currentPosition);
+            if (!IsMoveInsideBorder(newPos)) continue;
+            if (friendlyPieces.Contains(newPos)) continue;
+            if (enemyPieces.Contains(newPos)){
+                moveList.Add((newPos.Item1, newPos.Item2, true));
+            } else {
+        
+                moveList.Add((newPos.Item1, newPos.Item2, false));
             }
-            else if (piece.Color != this.Color)
-            {
-                validList.Add((newPos.Item1, newPos.Item2, true));
-            }
+            // var piece = board.GetSquare(newPos);
+            // if (piece == null)
+            // {
+            //     validList.Add((newPos.Item1, newPos.Item2, false));
+            // }
+            // else if (piece.Color != this.Color)
+            // {
+            //     validList.Add((newPos.Item1, newPos.Item2, true));
+            // }
         }
 
-        return validList;
+        return moveList;
     }
 }

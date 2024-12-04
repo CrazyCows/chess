@@ -4,48 +4,28 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace chess.Models;
 
-public abstract class Piece(string Color, int x, int y)
+public abstract class Piece(string Color)
 {
     public string Color { get; set; } = Color;
-    public (int x, int y) Position { get; set; } = (x, y);
-    public abstract List<(int x, int y, bool IsEnemy)> GetValidMoves(Board board);
+    // public (int x, int y) Position { get; set; } = (x, y);
+    public abstract List<(int x, int y, bool IsEnemy)> GetMoves((int x, int y) currentPosition, List<(int x, int y)> enemyPieces, List<(int x, int y)> friendlyPieces);
     public virtual string Symbol => " ";
 
 
-    public bool IsMoveValid((int x, int y) targetPosition, Board board)
+    public bool IsMoveInsideBorder((int x, int y) currentPosition) 
     {
-        return GetValidMoves(board)
-            .Any(move => move.x == targetPosition.x && move.y == targetPosition.y);
-    }
-
-    public void Move((int x, int y) targetPosition, Board board)
-    {
-        
-        if (IsMoveValid(targetPosition, board))
-        {
-            Position = targetPosition;
-        }
-        else
-        {
-            throw new InvalidOperationException("Invalid target position");
-        }
-    }
-
-    public bool IsMoveInsideBorder((int x, int y) move) 
-    {
-        if (Position.x + move.x > 7 || Position.x + move.x < 0) 
+        if (currentPosition.Item1 > 7 || currentPosition.Item1 < 0) 
         {
             return false;
         }
-        if (Position.y + move.y > 7 || Position.y + move.y < 0)
+        if (currentPosition.Item2 > 7 || currentPosition.Item2 < 0)
         {
             return false;
         }
         return true;
-        
     }
 
-    public (int, int) GetNewPosition((int x, int y) posToAdd)
+    public (int, int) GetNewPosition((int x, int y) posToAdd, (int x, int y) Position)
     {
         return (Position.x + posToAdd.x, Position.y + posToAdd.y);
     }

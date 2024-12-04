@@ -3,7 +3,38 @@
 
 @inject GameService GameService
 
+<div class="game-info">
+    <div class="turn-indicator">
+        Current Turn: <span class="turn">@GameService.CurrentTurn</span>
+    </div>
+    <div class="status-indicator">
+        <span class="check-status">
+            @if (isCheck)
+            {
+                <span>Check!</span>
+            }
+        </span>
+        <span class="checkmate-status">
+            @if (isCheckmate)
+            {
+                <span>Checkmate!</span>
+            }
+        </span>
+    </div>
+    <div class="timer">
+        White Time: @FormatTime(whiteTime) | Black Time: @FormatTime(blackTime)
+    </div>
+</div>
+
+
 <div class="chessboard">
+    @if (isCheckmate)
+    {
+        <div class="game-controls">
+            <button @onclick="RestartGame">Restart Game</button>
+        </div>
+    }
+    
     @for (int row = 7; row >= 0; row--)
     {
         <div class="row">
@@ -30,7 +61,6 @@
                 <div class="@cssClass" @onclick="() => OnSquareClicked(currentRow, currentCol)">
                     @if (piece != null)
                     {
-
                         <span class="piece">@piece.Symbol</span>
                     }
                 </div>
@@ -40,20 +70,70 @@
 </div>
 
 @code {
+    private bool isCheck = false;
+    private bool isCheckmate = false;
+    private int whiteTime;
+    private int blackTime;
+
     private int? selectedRow = null;
     private int? selectedCol = null;
     private List<(int x, int y, bool IsEnemy)> validMoves = new();
 
+    protected override void OnInitialized()
+    {
+        GameService.IsCheck += async (checkStatus) => await UpdateCheckStatus(checkStatus);
+        GameService.IsCheckMate += async (checkmateStatus) => await UpdateCheckmateStatus(checkmateStatus);
+        GameService.Timer.OnTimeUpdated += async () => await UpdateTimer();
+        GameService.Timer.OnTimeExpired += async (losingPlayer) => await HandleTimeExpired(losingPlayer);
+
+        UpdateTimer(); // Initialize timer display
+    }
+
+    private async Task UpdateCheckStatus(bool checkStatus)
+    {
+        isCheck = checkStatus;
+        await InvokeAsync(StateHasChanged); // Ensures UI update runs on the correct thread
+    }
+
+    private async Task UpdateCheckmateStatus(bool checkmateStatus)
+    {
+        isCheckmate = checkmateStatus;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task UpdateTimer()
+    {
+        (whiteTime, blackTime) = GameService.Timer.GetRemainingTimes();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task HandleTimeExpired(string losingPlayer)
+    {
+        isCheckmate = true; // Consider this a game over
+        Console.WriteLine($"{losingPlayer} ran out of time. Game Over!");
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task RestartGame()
+    {
+        GameService.Restart();
+        isCheck = false;
+        isCheckmate = false;
+        selectedRow = null;
+        selectedCol = null;
+        validMoves.Clear();
+
+        UpdateTimer();
+        await InvokeAsync(StateHasChanged);
+    }
 
     private void OnSquareClicked(int row, int col)
     {
-        
         Console.WriteLine($"square clicked: ({row}, {col})");
         var piece = GameService.Board.Squares[row, col];
 
         if (selectedRow == null)
         {
-            // No piece selected yet
             if (piece != null && piece.Color == GameService.CurrentTurn)
             {
                 selectedRow = row;
@@ -61,30 +141,57 @@
                 var moves = GameService.GetValidMoves(row, col);
                 validMoves = moves ?? new();
             }
-
         }
         else
         {
-            // Piece is selected, check if clicked square is a valid move
             if (validMoves.Any(m => m.x == row && m.y == col))
             {
-                // Make the move
                 GameService.MakeMove(selectedRow.Value, selectedCol.Value, row, col);
-                // Switch turn
-                GameService.CurrentTurn = GameService.CurrentTurn == "White" ? "Black" : "White";
             }
-
-            // Clear selection and valid moves
             selectedRow = null;
             selectedCol = null;
             validMoves.Clear();
         }
     }
+
+    private string FormatTime(int timeInSeconds)
+    {
+        int minutes = timeInSeconds / 60;
+        int seconds = timeInSeconds % 60;
+        return $"{minutes:D2}:{seconds:D2}";
+    }
 }
 
 
 <style>
-    .chessboard {
+    .game-info {
+    margin-bottom: 10px;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.turn-indicator {
+    font-size: 18px;
+}
+
+.status-indicator {
+    font-size: 18px;
+}
+
+.check-status, .checkmate-status {
+    margin-right: 10px;
+    font-weight: bold;
+    color: red;
+}
+
+.timer {
+    font-size: 16px;
+}
+
+.chessboard {
+    position: relative;
     display: inline-block;
     border: 2px solid black;
 }
@@ -116,5 +223,36 @@
 .piece {
     font-size: 40px;
 }
+
+
+
+.game-controls {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    display: none; /* Initially hidden */
+}
+
+.game-controls button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    background-color: #4CAF50;
+    color: white;
+    cursor: pointer;
+}
+
+.game-controls button:hover {
+    background-color: #45a049;
+}
+
+/* Display the controls only when the game ends */
+.chessboard .game-controls {
+    display: block;
+}
+
 
 </style>
