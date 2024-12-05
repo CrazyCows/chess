@@ -3,6 +3,7 @@ namespace chess.Models.Pieces;
 public class Knight(string Color) : Piece(Color)
 {
     public override string Symbol => Color == "White" ? "♘" : "♞";
+    public override double Weight => 0.5;
 
     public override List<(int x, int y, bool IsEnemy)> GetMoves((int x, int y) currentPosition, List<(int x, int y)> enemyPieces, List<(int x, int y)> friendlyPieces)
     {
@@ -24,6 +25,8 @@ public class Knight(string Color) : Piece(Color)
             } else {
                 moveList.Add((newPos.Item1, newPos.Item2, false));
             }
+
+            
 
 
             // var piece = board.GetSquare(newPos);

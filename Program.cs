@@ -35,7 +35,10 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
-builder.Services.AddSingleton<GameService>();
+builder.Services.AddSingleton<GameLogicService>();
+builder.Services.AddSingleton<Timer>();
+builder.Services.AddTransient<CheckValidator>();
+builder.Services.AddSingleton<MoveValidator>();
 
 var app = builder.Build();
 

@@ -8,11 +8,17 @@ public class Timer
     public string CurrentTurn { get; set; } = "White";
     public event Action OnTimeUpdated;
     public event Action<string> OnTimeExpired;
+    public event Action<string>? GameOverDueToTime;
 
     public Timer()
     {
         timer = new System.Timers.Timer(1000);
         timer.Elapsed += OnTimerElapsed;
+    }
+
+    public void HandleTimeExpired(string playerColor)
+    {
+        GameOverDueToTime?.Invoke(playerColor);
     }
 
     public void StartTimer()
@@ -24,6 +30,13 @@ public class Timer
     public void StopTimer()
     {
         timer.Stop();
+    }
+
+    public void ResetTimer()
+    {
+        whiteTimeLeft = 300;
+        blackTimeLeft = 300;
+        CurrentTurn = "White";
     }
 
     public void SwitchTurn(string currentTurn)

@@ -3,6 +3,7 @@ namespace chess.Models.Pieces;
 public class Rook(string Color) : Piece(Color)
 {
     public override string Symbol => Color == "White" ? "♖" : "♜";
+    public override double Weight => 0.65;
 
     public override List<(int x, int y, bool IsEnemy)> GetMoves((int x, int y) currentPosition, List<(int x, int y)> enemyPieces, List<(int x, int y)> friendlyPieces)
     {

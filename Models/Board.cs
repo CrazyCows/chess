@@ -65,11 +65,79 @@ public class Board
         Squares[7, 4] = new King("White");
     }
 
+    private bool CastlingMove(int toRow, int toColumn, Piece piece) 
+    {
+        if (Squares[toRow, toColumn] == null)
+        {
+            return false;
+        }
+        if (piece.GetType() == typeof(King) && Squares[toRow, toColumn].GetType() == typeof(Rook)) {
+            if (toColumn == 7) {
+                if (piece.Color == "White") {
+                    Squares[7, 7] = null;
+                    Squares[7, 4] = null;
+                    Squares[7, 5] = new Rook("White");
+                    Squares[7, 6] = new King("White");
+                } 
+                else if (piece.Color == "Black")
+                {
+                    Squares[0, 7] = null;
+                    Squares[0, 4] = null;
+                    Squares[0, 5] = new Rook("Black");
+                    Squares[0, 6] = new King("Black");
+                }
+            } 
+            else if (toColumn == 0)
+            {
+                if (piece.Color == "White") {
+                    Squares[7, 0] = null;
+                    Squares[7, 4] = null;
+                    Squares[7, 3] = new Rook("White");
+                    Squares[7, 2] = new King("White");
+                } 
+                else if (piece.Color == "Black")
+                {
+                    Squares[0, 0] = null;
+                    Squares[0, 4] = null;
+                    Squares[0, 3] = new Rook("Black");
+                    Squares[0, 2] = new King("Black");
+                }
+            }
+            Console.WriteLine("TRIGGERED");
+            return true;
+        }
+        return false;
+    }
+
+    private void TransformPawnToQueen(Piece piece, int toRow, int toColumn)
+    {
+        if (piece.GetType() == typeof(Pawn)) 
+        {
+            if (piece.Color == "White" && toRow == 0) 
+            {
+                Squares[toRow, toColumn] = new Queen("White");
+            } 
+            else if (piece.Color == "Black" && toRow == 7)
+            {
+                Squares[toRow, toColumn] = new Queen("Black");
+            }
+        }
+
+    }
+
     public void MovePiece(int fromRow, int fromColumn, int toRow, int toColumn) 
     {
+        
         Piece piece = Squares[fromRow, fromColumn];
+        if (CastlingMove(toRow, toColumn, piece))
+        {
+            return;
+        }
+
         Squares[fromRow, fromColumn] = null;
         Squares[toRow, toColumn] = piece;
+        TransformPawnToQueen(piece, toRow, toColumn);
+        
     }
 
     public (int x, int y)? GetKingPos(string color){

@@ -4,6 +4,8 @@ public class King(string Color) : Piece(Color)
 {
     public override string Symbol => Color == "White" ? "♔" : "♚";
 
+    public override double Weight => 1;
+
     public override List<(int x, int y, bool IsEnemy)> GetMoves((int x, int y) currentPosition, List<(int x, int y)> enemyPieces, List<(int x, int y)> friendlyPieces)
     {
         List<(int x, int y, bool IsEnemy)> moveList = new List<(int x, int y, bool IsEnemy)>();
