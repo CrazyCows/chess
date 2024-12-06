@@ -1,21 +1,14 @@
-using System.Drawing;
-using chess.Models.Pieces;
+using chess.Model.Pieces;
 
-namespace chess.Models;
+namespace chess.Model;
 
 public class Board
 {
-    public bool IsCheck { get; set; }
-    public bool IsCheckMate { get; set; }
-    public Piece[,] Squares { get; set; } 
+    public Piece?[,] Squares { get; set; } 
 
     public Board() {
         Squares = new Piece[8,8];
         InitializeBoard();
-    }
-
-    public Piece GetSquare((int x, int y) squarePosition){
-        return Squares[squarePosition.x, squarePosition.y];
     }
 
     public List<(int x, int y)> GetPiecePositionsByColor(string color){
@@ -26,7 +19,7 @@ public class Board
             for (int j = 0; j < Squares.GetLength(1); j++) 
             {
                 if (Squares[i,j] == null) continue;
-                if (Squares[i,j].Color == color)
+                if (Squares[i,j]!.Color == color)
                 {
                     positions.Add((i,j));
                 }
@@ -71,7 +64,7 @@ public class Board
         {
             return false;
         }
-        if (piece.GetType() == typeof(King) && Squares[toRow, toColumn].GetType() == typeof(Rook)) {
+        if (piece.GetType() == typeof(King) && Squares[toRow, toColumn]!.GetType() == typeof(Rook)) {
             if (toColumn == 7) {
                 if (piece.Color == "White") {
                     Squares[7, 7] = null;
@@ -128,7 +121,7 @@ public class Board
     public void MovePiece(int fromRow, int fromColumn, int toRow, int toColumn) 
     {
         
-        Piece piece = Squares[fromRow, fromColumn];
+        Piece piece = Squares[fromRow, fromColumn]!;
         if (CastlingMove(toRow, toColumn, piece))
         {
             return;
@@ -145,7 +138,7 @@ public class Board
         {
             for (int j = 0; j < Squares.GetLength(1); j++) 
             {
-                Piece piece = Squares[i, j];
+                Piece? piece = Squares[i, j];
                 if (piece != null && piece.GetType() == typeof(King) && piece.Color == color)
                 {
                     return (i,j);
@@ -165,7 +158,28 @@ public class Board
             {
                 if (Squares[i, j] != null)
                 {
-                    copy.Squares[i, j] = Squares[i, j];
+                    if (Squares[i, j]!.GetType() == typeof(King))
+                    {
+                        copy.Squares[i, j] = new King(Squares[i, j]!.Color);
+                    } else if (Squares[i, j]!.GetType() == typeof(Rook))
+                    {
+                        copy.Squares[i, j] = new Rook(Squares[i, j]!.Color);
+                    } else if (Squares[i, j]!.GetType() == typeof(Queen))
+                    {
+                        copy.Squares[i, j] = new Queen(Squares[i, j]!.Color);
+                    }
+                    else if (Squares[i, j]!.GetType() == typeof(Pawn))
+                    {
+                        copy.Squares[i, j] = new Pawn(Squares[i, j]!.Color);
+                    }
+                    else if (Squares[i, j]!.GetType() == typeof(Bishop))
+                    {
+                        copy.Squares[i, j] = new Bishop(Squares[i, j]!.Color);
+                    }
+                    else if (Squares[i, j]!.GetType() == typeof(Knight))
+                    {
+                        copy.Squares[i, j] = new Knight(Squares[i, j]!.Color);
+                    }
                 }
             }
         }

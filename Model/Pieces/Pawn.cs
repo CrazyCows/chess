@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-namespace chess.Models.Pieces;
+namespace chess.Model.Pieces;
 
 public class Pawn(string Color) : Piece(Color)
 {

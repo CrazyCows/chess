@@ -1,24 +1,37 @@
-using chess.Models;
+using chess.Model;
+using chess.Validators;
+using chess.Helper;
+
+
+namespace chess.Service;
 
 public class GameLogicService
 {
     public string CurrentTurn { get; set; } = "White";
-    public string enemyColor { get; set; } = "Black";
-
-    public Board Board { get; private set; } = new Board();
-    public MoveValidator MoveValidator { get; set; } = new MoveValidator();
-    public CheckValidator CheckValidator { get; set; } = new CheckValidator();
-    public Timer Timer { get; set; } = new Timer();
+    public Board Board { get; private set; }
+    private MoveValidator MoveValidator { get; set; }
+    public CheckValidator CheckValidator { get; set; }
+    public TimeTaking TimeTaking { get; set; }
+    public MinMax MinMax { get; set; }
+    private readonly object _lock = new object();
 
     public GameLogicService()
     {
-        Timer.OnTimeExpired += Timer.HandleTimeExpired;
+        Board = new Board();
+        MoveValidator = new MoveValidator();
+        CheckValidator = new CheckValidator();
+        TimeTaking = new TimeTaking();
+        MinMax = new MinMax();
         StartGame();
     }
 
     
     public List<(int x, int y, bool IsEnemy)> GetValidMoves(int x, int y){
         var moves = MoveValidator.GetValidMoves(x, y, Board, CurrentTurn);
+        if (!CheckValidator.Check(Board, CurrentTurn))
+        {
+            moves.AddRange(MoveValidator.GetCastlingMoves(x,y, Board, CurrentTurn));
+        }
         return moves;
     }
 
@@ -26,32 +39,43 @@ public class GameLogicService
     {
         Board.MovePiece(fromColumn, fromRow, toColumn, toRow);
         CurrentTurn = CurrentTurn == "White" ? "Black" : "White";
-        enemyColor = CurrentTurn == "White" ? "Black" : "White";
         var friendlyPieces = Board.GetPiecePositionsByColor(CurrentTurn);
-        bool check = CheckValidator.Check(Board, CurrentTurn);
-        if (check) {
-            var allMoves = new List<(int x, int y, bool IsEnemy)>();
-            foreach (var piece in friendlyPieces) {
-                allMoves.AddRange(MoveValidator.GetValidMoves(piece.x, piece.y, Board, CurrentTurn));
-                CheckValidator.Checkmate(allMoves);
-            }
+        var allMoves = new List<(int x, int y, bool IsEnemy)>();
+        foreach (var piece in friendlyPieces) {
+            allMoves.AddRange(MoveValidator.GetValidMoves(piece.x, piece.y, Board, CurrentTurn));
         }
+        CheckValidator.Checkmate(allMoves);
         MoveValidator.KingOrRookMoved(fromColumn, fromRow);
-        Timer.SwitchTurn(CurrentTurn);
+        TimeTaking.SwitchTurn(CurrentTurn);
+        CheckValidator.Check(Board, CurrentTurn);
+        
     }
 
-    public void StartGame()
+    public void MakeAiMove()
     {
-        Timer.CurrentTurn = CurrentTurn;
-        Timer.StartTimer();
+        lock (_lock)
+        {
+            if (CurrentTurn == "Black")
+            {
+                var bestMove = MinMax.GetBestMove(Board, "Black");
+                Board.MovePiece(bestMove.fromX, bestMove.fromY, bestMove.toX, bestMove.toY);
+                CurrentTurn = "White"; // End Black's turn
+                TimeTaking.SwitchTurn(CurrentTurn);
+                CheckValidator.Check(Board, CurrentTurn);
+            }
+        }
+    }
+    
+    private void StartGame()
+    {
+        TimeTaking.CurrentTurn = CurrentTurn;
+        TimeTaking.StartTimer();
     }
 
     public void Restart()
     {
         Board = new Board(); 
         CurrentTurn = "White";
-        enemyColor = "Black";
-        Timer.OnTimeExpired += Timer.HandleTimeExpired;
-        Timer.StartTimer();
+        TimeTaking.StartTimer();
     }
 }

@@ -1,4 +1,5 @@
 @page "/chessboard"
+@using chess.Service
 @rendermode InteractiveServer
 
 @inject GameLogicService GameService
@@ -9,31 +10,34 @@
     </div>
     <div class="status-indicator">
         <span class="check-status">
-            @if (isCheck)
+            @if (_isCheck)
             {
                 <span>Check!</span>
             }
         </span>
         <span class="checkmate-status">
-            @if (isCheckmate)
+            @if (_isCheckmate)
             {
                 <span>Checkmate!</span>
             }
         </span>
     </div>
     <div class="timer">
-        White Time: @FormatTime(whiteTime) | Black Time: @FormatTime(blackTime)
+        White Time: @FormatTime(_whiteTime) | Black Time: @FormatTime(_blackTime)
     </div>
 </div>
 
 
 <div class="chessboard">
-    @if (isCheckmate)
+    @if (_isCheckmate)
     {
         <div class="game-controls">
             <button @onclick="RestartGame">Restart Game</button>
         </div>
     }
+    
+
+    
     
     @for (int row = 7; row >= 0; row--)
     {
@@ -41,7 +45,7 @@
             @for (int col = 0; col < 8; col++)
             {
                 var piece = GameService.Board.Squares[row, col];
-                bool isHighlighted = validMoves.Any(m => m.x == row && m.y == col);
+                bool isHighlighted = _validMoves.Any(m => m.x == row && m.y == col);
                 string cssClass = "square";
                 var currentRow = row; // Capture row
                 var currentCol = col; // Capture col
@@ -70,61 +74,58 @@
 </div>
 
 @code {
-    private bool isCheck = false;
-    private bool isCheckmate = false;
-    private int whiteTime;
-    private int blackTime;
+    private bool _isCheck = false;
+    private bool _isCheckmate = false;
+    private int _whiteTime;
+    private int _blackTime;
 
-    private int? selectedRow = null;
-    private int? selectedCol = null;
-    private List<(int x, int y, bool IsEnemy)> validMoves = new();
+    private int? _selectedRow = null;
+    private int? _selectedCol = null;
+    private List<(int x, int y, bool IsEnemy)> _validMoves = new();
 
     protected override void OnInitialized()
     {
-        GameService.CheckValidator.IsCheck += async (checkStatus) => await UpdateCheckStatus(checkStatus);
-        GameService.CheckValidator.IsCheckMate += async (checkmateStatus) => await UpdateCheckmateStatus(checkmateStatus);
-        GameService.Timer.OnTimeUpdated += async () => await UpdateTimer();
-        GameService.Timer.OnTimeExpired += async (losingPlayer) => await HandleTimeExpired(losingPlayer);
-
-        UpdateTimer(); // Initialize timer display
+        GameService.CheckValidator.IsCheck += async (checkStatus) =>
+        {
+            _isCheck = checkStatus;
+            await InvokeAsync(StateHasChanged);
+        };
+        GameService.CheckValidator.IsCheckMate += async (checkmateStatus) =>
+        {
+            _isCheckmate = checkmateStatus;
+            await InvokeAsync(StateHasChanged);
+        };
+        GameService.TimeTaking.OnTimeUpdated += async () =>
+        {
+            (_whiteTime, _blackTime) = GameService.TimeTaking.GetRemainingTimes();
+            await InvokeAsync(StateHasChanged);
+        };
+        GameService.TimeTaking.OnTimeExpired += async (losingPlayer) =>
+        {
+            _isCheckmate = true;
+            Console.WriteLine($"{losingPlayer} ran out of time. Game Over!");
+            await InvokeAsync(StateHasChanged);
+        };
     }
 
-    private async Task UpdateCheckStatus(bool checkStatus)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        isCheck = checkStatus;
-        await InvokeAsync(StateHasChanged); // Ensures UI update runs on the correct thread
+        if (GameService.CurrentTurn == "Black" && !_isCheckmate)
+        {
+            await TriggerAiMove();
+        }
     }
 
-    private async Task UpdateCheckmateStatus(bool checkmateStatus)
-    {
-        isCheckmate = checkmateStatus;
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private async Task UpdateTimer()
-    {
-        (whiteTime, blackTime) = GameService.Timer.GetRemainingTimes();
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private async Task HandleTimeExpired(string losingPlayer)
-    {
-        isCheckmate = true; // Consider this a game over
-        Console.WriteLine($"{losingPlayer} ran out of time. Game Over!");
-        await InvokeAsync(StateHasChanged);
-    }
 
     private async Task RestartGame()
     {
         GameService.Restart();
-        isCheck = false;
-        isCheckmate = false;
-        selectedRow = null;
-        selectedCol = null;
-        validMoves.Clear();
-        GameService.Timer.ResetTimer();
-
-        UpdateTimer();
+        _isCheck = false;
+        _isCheckmate = false;
+        _selectedRow = null;
+        _selectedCol = null;
+        _validMoves.Clear();
+        GameService.TimeTaking.ResetTimer();
         await InvokeAsync(StateHasChanged);
     }
 
@@ -133,25 +134,25 @@
         Console.WriteLine($"square clicked: ({row}, {col})");
         var piece = GameService.Board.Squares[row, col];
 
-        if (selectedRow == null)
+        if (_selectedRow == null)
         {
             if (piece != null && piece.Color == GameService.CurrentTurn)
             {
-                selectedRow = row;
-                selectedCol = col;
+                _selectedRow = row;
+                _selectedCol = col;
                 var moves = GameService.GetValidMoves(row, col);
-                validMoves = moves ?? new();
+                _validMoves = moves ?? new();
             }
         }
         else
         {
-            if (validMoves.Any(m => m.x == row && m.y == col))
+            if (_validMoves.Any(m => m.x == row && m.y == col))
             {
-                GameService.MakeMove(selectedRow.Value, selectedCol.Value, row, col);
+                GameService.MakeMove(_selectedRow.Value, _selectedCol.Value, row, col);
             }
-            selectedRow = null;
-            selectedCol = null;
-            validMoves.Clear();
+            _selectedRow = null;
+            _selectedCol = null;
+            _validMoves.Clear();
         }
     }
 
@@ -160,6 +161,18 @@
         int minutes = timeInSeconds / 60;
         int seconds = timeInSeconds % 60;
         return $"{minutes:D2}:{seconds:D2}";
+    }
+    
+    private async Task TriggerAiMove()
+    {
+        // Run AI logic in a background thread to avoid blocking the UI thread
+        await Task.Run(() =>
+        {
+            GameService.MakeAiMove();
+        });
+
+        // After AI has made its move, update the UI
+        await InvokeAsync(StateHasChanged);
     }
 }
 

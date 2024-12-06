@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using chess.Components;
 using chess.Components.Account;
 using chess.Data;
+using chess.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,9 +37,6 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 builder.Services.AddSingleton<GameLogicService>();
-builder.Services.AddSingleton<Timer>();
-builder.Services.AddTransient<CheckValidator>();
-builder.Services.AddSingleton<MoveValidator>();
 
 var app = builder.Build();
 

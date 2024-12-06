@@ -1,41 +1,37 @@
-using System;
+namespace chess.Helper;
 
-public class Timer
+public class TimeTaking
 {
-    private int whiteTimeLeft = 300; 
-    private int blackTimeLeft = 300; 
-    private System.Timers.Timer timer;
+    private int _whiteTimeLeft = 300; 
+    private int _blackTimeLeft = 300; 
+    private readonly System.Timers.Timer _timer;
     public string CurrentTurn { get; set; } = "White";
-    public event Action OnTimeUpdated;
-    public event Action<string> OnTimeExpired;
-    public event Action<string>? GameOverDueToTime;
+    public event Action? OnTimeUpdated;
+    public event Action<string>? OnTimeExpired;
 
-    public Timer()
+    public TimeTaking()
     {
-        timer = new System.Timers.Timer(1000);
-        timer.Elapsed += OnTimerElapsed;
+        _timer = new System.Timers.Timer(1000);
+        _timer.Elapsed += OnTimerElapsed!;
     }
 
-    public void HandleTimeExpired(string playerColor)
-    {
-        GameOverDueToTime?.Invoke(playerColor);
-    }
+
 
     public void StartTimer()
     {
         Console.WriteLine("TIME STARTED");
-        timer.Start();
+        _timer.Start();
     }
 
     public void StopTimer()
     {
-        timer.Stop();
+        _timer.Stop();
     }
 
     public void ResetTimer()
     {
-        whiteTimeLeft = 300;
-        blackTimeLeft = 300;
+        _whiteTimeLeft = 300;
+        _blackTimeLeft = 300;
         CurrentTurn = "White";
     }
 
@@ -48,20 +44,20 @@ public class Timer
     {
         if (CurrentTurn == "White")
         {
-            whiteTimeLeft--;
-            if (whiteTimeLeft <= 0)
+            _whiteTimeLeft--;
+            if (_whiteTimeLeft <= 0)
             {
-                timer.Stop();
+                _timer.Stop();
                 Console.WriteLine("White ran out of time!");
                 OnTimeExpired?.Invoke("White");
             }
         }
         else
         {
-            blackTimeLeft--;
-            if (blackTimeLeft <= 0)
+            _blackTimeLeft--;
+            if (_blackTimeLeft <= 0)
             {
-                timer.Stop();
+                _timer.Stop();
                 Console.WriteLine("Black ran out of time!");
                 OnTimeExpired?.Invoke("Black");
             }
@@ -72,6 +68,6 @@ public class Timer
 
     public (int whiteTime, int blackTime) GetRemainingTimes()
     {
-        return (whiteTimeLeft, blackTimeLeft);
+        return (_whiteTimeLeft, _blackTimeLeft);
     }
 }

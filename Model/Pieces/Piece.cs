@@ -2,7 +2,7 @@ using System.Drawing;
 using System.Runtime.InteropServices.Swift;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace chess.Models;
+namespace chess.Model.Pieces;
 
 public abstract class Piece(string Color)
 {

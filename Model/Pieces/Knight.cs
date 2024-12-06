@@ -1,4 +1,4 @@
-namespace chess.Models.Pieces;
+namespace chess.Model.Pieces;
 
 public class Knight(string Color) : Piece(Color)
 {
