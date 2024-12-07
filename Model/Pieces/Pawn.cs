@@ -23,11 +23,12 @@ public class Pawn(string Color) : Piece(Color)
         var rightPos = GetNewPosition(captureRight, currentPosition);
         
 
-        if (IsMoveInsideBorder(forwardPos) && !enemyPieces.Contains(forwardPos) && !friendlyPieces.Contains(forwardPos)) {
+        if (IsMoveInsideBorder(forwardPos) && !enemyPieces.Contains(forwardPos) && !friendlyPieces.Contains(forwardPos)) 
+        {
             moveList.Add((forwardPos.Item1, forwardPos.Item2, false));
             if (currentPosition.x == startPos && !enemyPieces.Contains(forwardPos2) && !friendlyPieces.Contains(forwardPos2)) {
-            moveList.Add((forwardPos2.Item1, forwardPos2.Item2, false));
-        }
+                moveList.Add((forwardPos2.Item1, forwardPos2.Item2, false));
+            }
         }
         
         if (IsMoveInsideBorder(leftPos) && enemyPieces.Contains(leftPos)) {

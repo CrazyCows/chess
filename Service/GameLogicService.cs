@@ -59,9 +59,15 @@ public class GameLogicService
             {
                 var bestMove = MinMax.GetBestMove(Board, "Black");
                 Board.MovePiece(bestMove.fromX, bestMove.fromY, bestMove.toX, bestMove.toY);
-                CurrentTurn = "White"; // End Black's turn
+                CurrentTurn = "White";
                 TimeTaking.SwitchTurn(CurrentTurn);
                 CheckValidator.Check(Board, CurrentTurn);
+                var friendlyPieces = Board.GetPiecePositionsByColor(CurrentTurn);
+                var allMoves = new List<(int x, int y, bool IsEnemy)>();
+                foreach (var piece in friendlyPieces) {
+                    allMoves.AddRange(MoveValidator.GetValidMoves(piece.x, piece.y, Board, CurrentTurn));
+                }
+                CheckValidator.Checkmate(allMoves);
             }
         }
     }
