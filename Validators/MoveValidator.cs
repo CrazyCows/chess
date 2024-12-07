@@ -5,15 +5,6 @@ namespace chess.Validators;
 
 public class MoveValidator
 {
-    private bool WhiteKingMoved { get; set; }
-    private bool WhiteRightRookMoved { get; set; }
-    private bool WhiteLeftRookMoved { get; set; }
-    private bool BlackKingMoved { get; set; }
-    private bool BlackRightRookMoved { get; set; }
-    private bool BlackLeftRookMoved { get; set; }
-
-
-
     public bool ValidateMove((int x, int y) from, (int x, int y) to, Board board)
     {
         Piece fromPiece = board.Squares[from.x, from.y]!;
@@ -45,31 +36,13 @@ public class MoveValidator
         return false;
     }
 
-    public void KingOrRookMoved(int fromColumn, int fromRow)
-    {
-        if (fromColumn == 0 && fromRow == 0) {
-            BlackLeftRookMoved = true;
-        }
-        if (fromColumn == 0 && fromRow == 7) {
-            BlackRightRookMoved = true;
-        }
-        if (fromColumn == 7 && fromRow == 0) {
-            WhiteLeftRookMoved = true;
-        }
-        if (fromColumn == 7 && fromRow == 7) {
-            WhiteRightRookMoved = true;
-        }
-        if (fromColumn == 0 && fromRow == 4) {
-            BlackKingMoved = true;
-        }
-        if (fromColumn == 7 && fromRow == 4) {
-            WhiteKingMoved = true;
-        }
-    }
+    
 
 
     public List<(int x, int y, bool IsEnemy)> GetCastlingMoves(int x, int y, Board board, 
-        string friendlyColor)
+        string friendlyColor, bool whiteKingMoved, bool blackKingMoved,
+        bool whiteLeftRookMoved, bool whiteRightRookMoved,
+        bool blackLeftRookMoved, bool blackRightRookMoved)
     {
         
 
@@ -79,9 +52,9 @@ public class MoveValidator
             return moves;
         }
         
-        if (!WhiteKingMoved){
+        if (!whiteKingMoved){
             if (board.Squares[7,0] != null && board.Squares[7,0]!.Color == "White" 
-                                           && friendlyColor == "White" && !WhiteLeftRookMoved 
+                                           && friendlyColor == "White" && !whiteLeftRookMoved 
                                            && board.Squares[7,1] == null && board.Squares[7,2] == null 
                                            && board.Squares[7,3] == null) 
             {
@@ -96,7 +69,7 @@ public class MoveValidator
                 board.Squares[7,3] = null;
             }
             if (board.Squares[7,7] != null && board.Squares[7,7]!.Color == "White" 
-                                           && friendlyColor == "White" && !WhiteRightRookMoved
+                                           && friendlyColor == "White" && !whiteRightRookMoved
                                            && board.Squares[7,5] == null && board.Squares[7,6] == null)  
             {
                 board.Squares[7,7] = null;
@@ -111,10 +84,10 @@ public class MoveValidator
             }
         }
         
-        if (!BlackKingMoved)
+        if (!blackKingMoved)
         {
             if (board.Squares[0,0] != null && board.Squares[0,0]!.Color == "Black" 
-                                           && friendlyColor == "Black" && !BlackLeftRookMoved
+                                           && friendlyColor == "Black" && !blackLeftRookMoved
                     && board.Squares[0,1] == null && board.Squares[0,2] == null && board.Squares[0,3] == null) 
             {
                 board.Squares[0,0] = null;
@@ -128,7 +101,7 @@ public class MoveValidator
                 board.Squares[0,3] = null;
             }
             if (board.Squares[0,7] != null && board.Squares[0,7]!.Color == "Black" 
-                                           && friendlyColor == "Black" && !BlackRightRookMoved
+                                           && friendlyColor == "Black" && !blackRightRookMoved
                     && board.Squares[0,5] == null && board.Squares[0,6] == null) 
             {
 

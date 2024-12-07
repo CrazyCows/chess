@@ -15,8 +15,6 @@ public class TimeTaking
         _timer.Elapsed += OnTimerElapsed!;
     }
 
-
-
     public void StartTimer()
     {
         Console.WriteLine("TIME STARTED");

@@ -64,6 +64,7 @@ public class Board
         {
             return false;
         }
+        
         if (piece.GetType() == typeof(King) && Squares[toRow, toColumn]!.GetType() == typeof(Rook)) {
             if (toColumn == 7) {
                 if (piece.Color == "White") {
@@ -122,6 +123,7 @@ public class Board
     {
         
         Piece piece = Squares[fromRow, fromColumn]!;
+        // if (piece == null) return;
         if (CastlingMove(toRow, toColumn, piece))
         {
             return;

@@ -4,8 +4,6 @@ namespace chess.Validators;
 
 public class CheckValidator
 {
-    public event Action<bool>? IsCheck;
-    public event Action<bool>? IsCheckMate;
 
     public bool Check(Board board, string friendlyColor)
     {
@@ -15,7 +13,6 @@ public class CheckValidator
         var enemyPieces = board.GetPiecePositionsByColor(friendlyColor == "White" ? "Black" : "White");
         if (kingPos == null)
         {
-            IsCheck?.Invoke(true);
             return true;
         }
 
@@ -23,10 +20,8 @@ public class CheckValidator
                 piece.GetMoves((ep.x, ep.y), friendlyPieces, enemyPieces)).
             Any(moves => moves.Any(move => move.x == kingPos.Value.x && move.y == kingPos.Value.y)))
         {
-            IsCheck?.Invoke(true);
             return true;
         }
-        IsCheck?.Invoke(false);
         return false;
     }
 
@@ -35,10 +30,8 @@ public class CheckValidator
 
         if (validMoves.Count == 0)
         {
-            IsCheckMate?.Invoke(true);
             return true;
         }
-        IsCheckMate?.Invoke(false);
         return false;
     }
 }

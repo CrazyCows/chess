@@ -7,13 +7,14 @@ namespace chess.Service;
 
 public class GameLogicService
 {
-    public string CurrentTurn { get; set; } = "White";
+    public event Action? TurnSwitched;
     public Board Board { get; private set; }
     private MoveValidator MoveValidator { get; set; }
     public CheckValidator CheckValidator { get; set; }
     public TimeTaking TimeTaking { get; set; }
     public MinMax MinMax { get; set; }
-    private readonly object _lock = new object();
+    public GameState GameState { get; set; }
+    
 
     public GameLogicService()
     {
@@ -22,15 +23,57 @@ public class GameLogicService
         CheckValidator = new CheckValidator();
         TimeTaking = new TimeTaking();
         MinMax = new MinMax();
+        GameState = new GameState();
         StartGame();
     }
 
+    public event Action<bool>? IsCheck
+    {
+        add => GameState.IsCheck += value;
+        remove => GameState.IsCheck -= value;
+    }
+
+    public event Action<bool>? IsCheckMate
+    {
+        add => GameState.IsCheckMate += value;
+        remove => GameState.IsCheckMate -= value;
+    }
+
+    public bool Check()
+    {
+        if (CheckValidator.Check(Board, GameState.CurrentTurn))
+        {
+            GameState.InvokeCheck(true);
+            return true;
+        }
+        GameState.InvokeCheck(false);
+        return false;
+    }
+
+    public bool CheckMate()
+    {
+        var friendlyPieces = Board.GetPiecePositionsByColor(GameState.CurrentTurn);
+        var allMoves = new List<(int x, int y, bool IsEnemy)>();
+        foreach (var piece in friendlyPieces) {
+            allMoves.AddRange(MoveValidator.GetValidMoves(piece.x, piece.y, Board, GameState.CurrentTurn));
+        }
+        if (CheckValidator.Checkmate(allMoves))
+        {
+            GameState.InvokeCheckMate(true);
+            return true;
+        }
+        GameState.InvokeCheckMate(false);
+        return false;
+    }
     
     public List<(int x, int y, bool IsEnemy)> GetValidMoves(int x, int y){
-        var moves = MoveValidator.GetValidMoves(x, y, Board, CurrentTurn);
-        if (!CheckValidator.Check(Board, CurrentTurn))
+        var moves = MoveValidator.GetValidMoves(x, y, Board, GameState.CurrentTurn);
+        if (!Check())
         {
-            moves.AddRange(MoveValidator.GetCastlingMoves(x,y, Board, CurrentTurn));
+            moves.AddRange(MoveValidator.GetCastlingMoves(x,y, Board, GameState.CurrentTurn, 
+                GameState.WhiteKingMoved, GameState.BlackKingMoved, 
+                GameState.WhiteLeftRookMoved, GameState.WhiteRightRookMoved, 
+                GameState.BlackLeftRookMoved, GameState.BlackRightRookMoved));
         }
         return moves;
     }
@@ -38,50 +81,43 @@ public class GameLogicService
     public void MakeMove(int fromColumn, int fromRow, int toColumn, int toRow)
     {
         Board.MovePiece(fromColumn, fromRow, toColumn, toRow);
-        CurrentTurn = CurrentTurn == "White" ? "Black" : "White";
-        var friendlyPieces = Board.GetPiecePositionsByColor(CurrentTurn);
-        var allMoves = new List<(int x, int y, bool IsEnemy)>();
-        foreach (var piece in friendlyPieces) {
-            allMoves.AddRange(MoveValidator.GetValidMoves(piece.x, piece.y, Board, CurrentTurn));
-        }
-        CheckValidator.Checkmate(allMoves);
-        MoveValidator.KingOrRookMoved(fromColumn, fromRow);
-        TimeTaking.SwitchTurn(CurrentTurn);
-        CheckValidator.Check(Board, CurrentTurn);
-        
+        GameState.CurrentTurn = GameState.CurrentTurn == "White" ? "Black" : "White";
+        GameState.KingOrRookMoved(fromColumn, fromRow);
+        TimeTaking.SwitchTurn(GameState.CurrentTurn);
+        Check();
+        CheckMate();
+        TurnSwitched?.Invoke();
     }
 
     public void MakeAiMove()
     {
-        lock (_lock)
+        if (GameState.CurrentTurn == "Black")
         {
-            if (CurrentTurn == "Black")
-            {
-                var bestMove = MinMax.GetBestMove(Board, "Black");
-                Board.MovePiece(bestMove.fromX, bestMove.fromY, bestMove.toX, bestMove.toY);
-                CurrentTurn = "White";
-                TimeTaking.SwitchTurn(CurrentTurn);
-                CheckValidator.Check(Board, CurrentTurn);
-                var friendlyPieces = Board.GetPiecePositionsByColor(CurrentTurn);
-                var allMoves = new List<(int x, int y, bool IsEnemy)>();
-                foreach (var piece in friendlyPieces) {
-                    allMoves.AddRange(MoveValidator.GetValidMoves(piece.x, piece.y, Board, CurrentTurn));
-                }
-                CheckValidator.Checkmate(allMoves);
-            }
+            Console.WriteLine("WTF");
+            var bestMove = MinMax.GetBestMove(Board, "Black");
+            Board.MovePiece(bestMove.fromX, bestMove.fromY, bestMove.toX, bestMove.toY);
+            GameState.CurrentTurn = "White";
+            TimeTaking.SwitchTurn(GameState.CurrentTurn);
+            Check();
+            CheckMate();
         }
+    }
+
+    public string GetCurrentTurn()
+    {
+        return GameState.CurrentTurn;
     }
     
     private void StartGame()
     {
-        TimeTaking.CurrentTurn = CurrentTurn;
+        TimeTaking.CurrentTurn = GameState.CurrentTurn;
         TimeTaking.StartTimer();
     }
 
     public void Restart()
     {
         Board = new Board(); 
-        CurrentTurn = "White";
+        GameState.CurrentTurn = "White";
         TimeTaking.StartTimer();
     }
 }

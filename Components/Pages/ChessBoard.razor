@@ -6,7 +6,7 @@
 
 <div class="game-info">
     <div class="turn-indicator">
-        Current Turn: <span class="turn">@GameService.CurrentTurn</span>
+        Current Turn: <span class="turn">@GameService.GetCurrentTurn()</span>
     </div>
     <div class="status-indicator">
         <span class="check-status">
@@ -82,15 +82,16 @@
     private int? _selectedRow = null;
     private int? _selectedCol = null;
     private List<(int x, int y, bool IsEnemy)> _validMoves = new();
+    private static readonly object _lock = new object();
 
     protected override void OnInitialized()
     {
-        GameService.CheckValidator.IsCheck += async (checkStatus) =>
+        GameService.IsCheck += async (checkStatus) =>
         {
             _isCheck = checkStatus;
             await InvokeAsync(StateHasChanged);
         };
-        GameService.CheckValidator.IsCheckMate += async (checkmateStatus) =>
+        GameService.IsCheckMate += async (checkmateStatus) =>
         {
             _isCheckmate = checkmateStatus;
             await InvokeAsync(StateHasChanged);
@@ -106,15 +107,21 @@
             Console.WriteLine($"{losingPlayer} ran out of time. Game Over!");
             await InvokeAsync(StateHasChanged);
         };
+        GameService.TurnSwitched += async () =>
+        {
+            await Task.Run(() =>
+            {
+                lock (_lock)
+                {
+                    GameService.MakeAiMove();
+                }
+            });
+            await InvokeAsync(StateHasChanged);
+        };
+
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (GameService.CurrentTurn == "Black" && !_isCheckmate)
-        {
-            await TriggerAiMove();
-        }
-    }
+
 
 
     private async Task RestartGame()
@@ -136,7 +143,7 @@
 
         if (_selectedRow == null)
         {
-            if (piece != null && piece.Color == GameService.CurrentTurn)
+            if (piece != null && piece.Color == GameService.GetCurrentTurn())
             {
                 _selectedRow = row;
                 _selectedCol = col;
@@ -163,17 +170,7 @@
         return $"{minutes:D2}:{seconds:D2}";
     }
     
-    private async Task TriggerAiMove()
-    {
-        // Run AI logic in a background thread to avoid blocking the UI thread
-        await Task.Run(() =>
-        {
-            GameService.MakeAiMove();
-        });
 
-        // After AI has made its move, update the UI
-        await InvokeAsync(StateHasChanged);
-    }
 }
 
 
