@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using chess.Interfaces;
 using chess.Model;
 using chess.Model.Pieces;
 using chess.Validators;
@@ -6,12 +7,19 @@ using chess.Validators;
 
 namespace chess.Helper;
 
-public class MinMax
+public class MinMax : IMinMax
     {
-        private readonly int _maxDepth = 4;
-        MoveValidator _moveValidator = new MoveValidator();
+        private readonly int _maxDepth = 3;
+        private IMoveValidator MoveValidator { get; }
 
-        public (int fromX, int fromY, int toX, int toY) GetBestMove(Board board, GameState gameState, CastlingState castlingState, string currentTurn)
+        public MinMax(IMoveValidator moveValidator)
+        {
+            MoveValidator = moveValidator;
+        }
+
+
+        public (int fromX, int fromY, int toX, int toY) GetBestMove(Board board, GameState gameState, 
+            CastlingState castlingState, string currentTurn)
         {
             double bestValue = currentTurn == "Black" ? int.MinValue : int.MaxValue;
             (int fromX, int fromY, int toX, int toY) bestMove = (0, 0, 0, 0);
@@ -23,7 +31,7 @@ public class MinMax
                 Board boardTemp = board.DeepCopy();
                 GameState gameTemp = gameState.DeepCopy();
                 CastlingState castlingStateTemp = castlingState.DeepCopy();
-                var validMoves = _moveValidator.GetValidMoves(piece.x, piece.y, boardTemp, 
+                var validMoves = MoveValidator.GetValidMoves(piece.x, piece.y, boardTemp, 
                     currentTurn, castlingStateTemp.MovementStates, gameTemp.Check);
                 
                 foreach (var move in validMoves)
@@ -36,7 +44,7 @@ public class MinMax
                     clonedBoard.MovePiece(piece.x, piece.y, move.x, move.y);
 
                     double boardValue = Minimax(clonedBoard, gameTemp2, castlingStateTemp2, _maxDepth - 1, 
-                        currentTurn == "Black" ? false : true);
+                        currentTurn != "Black");
 
                     if ((currentTurn == "Black" && boardValue > bestValue) ||
                         (currentTurn == "White" && boardValue < bestValue))
@@ -65,7 +73,7 @@ public class MinMax
 
             foreach (var piece in pieces)
             {
-                var validMoves = _moveValidator.GetValidMoves(piece.x, piece.y, board, currentTurn, 
+                var validMoves = MoveValidator.GetValidMoves(piece.x, piece.y, board, currentTurn, 
                     castlingState.MovementStates, gameState.Check);
                 foreach (var move in validMoves)
                 {
@@ -76,14 +84,7 @@ public class MinMax
 
                     double boardValue = Minimax(clonedBoard, gameTemp, castlingStateTemp, depth - 1, !isMaximizing);
 
-                    if (isMaximizing)
-                    {
-                        bestValue = Math.Max(bestValue, boardValue);
-                    }
-                    else
-                    {
-                        bestValue = Math.Min(bestValue, boardValue);
-                    }
+                    bestValue = isMaximizing ? Math.Max(bestValue, boardValue) : Math.Min(bestValue, boardValue);
                 }
             }
 

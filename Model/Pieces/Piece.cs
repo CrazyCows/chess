@@ -1,12 +1,12 @@
-using System.Drawing;
-using System.Runtime.InteropServices.Swift;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
+
+using chess.Interfaces;
 
 namespace chess.Model.Pieces;
 
-public abstract class Piece(string Color)
+public abstract class Piece(string color) : IPieces
 {
-    public string Color { get; set; } = Color;
+    public string Color { get; set; } = color;
+
     // public (int x, int y) Position { get; set; } = (x, y);
     public abstract List<(int x, int y, bool IsEnemy)> GetMoves((int x, int y) currentPosition, List<(int x, int y)> enemyPieces, List<(int x, int y)> friendlyPieces);
     public virtual string Symbol => " ";
@@ -26,9 +26,9 @@ public abstract class Piece(string Color)
         return true;
     }
 
-    public (int, int) GetNewPosition((int x, int y) posToAdd, (int x, int y) Position)
+    public (int x, int y) GetNewPosition((int x, int y) posToAdd, (int x, int y) position)
     {
-        return (Position.x + posToAdd.x, Position.y + posToAdd.y);
+        return (position.x + posToAdd.x, position.y + posToAdd.y);
     }
 }
     

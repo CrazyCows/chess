@@ -1,8 +1,9 @@
+using chess.Interfaces;
 using chess.Model;
 
 namespace chess.Validators;
 
-public class CheckValidator
+public class CheckValidator : ICheckValidator
 {
 
     public bool Check(Board board, string friendlyColor)

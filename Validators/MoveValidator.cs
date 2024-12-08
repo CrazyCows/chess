@@ -1,9 +1,10 @@
+using chess.Interfaces;
 using chess.Model;
 using chess.Model.Pieces;
 
 namespace chess.Validators;
 
-public class MoveValidator
+public class MoveValidator : IMoveValidator
 {
     private bool ValidateMove((int x, int y) from, (int x, int y) to, Board board, string currentTurn)
     {
@@ -119,7 +120,7 @@ public class MoveValidator
 
 
     public List<(int x, int y, bool IsEnemy)> GetValidMoves(int x, int y, Board board, string friendlyColor,
-        Dictionary<PlayerColor, Dictionary<PieceType, bool>> movementStates, bool IsCheck)
+        Dictionary<PlayerColor, Dictionary<PieceType, bool>> movementStates, bool isCheck)
     {
         var friendlyPieces = board.GetPiecePositionsByColor(friendlyColor);
         var enemyPieces = board.GetPiecePositionsByColor(friendlyColor == "White" ? "Black" : "White");
@@ -135,7 +136,7 @@ public class MoveValidator
                 finalMoves.Add(move);
             } 
         }
-        if (!IsCheck)
+        if (!isCheck)
         {
             finalMoves.AddRange(GetValidCastlingMoves(x,y, board, friendlyColor, movementStates));
         }
@@ -143,12 +144,12 @@ public class MoveValidator
     }
 
     public List<(int x, int y, bool IsEnemy)> GetAllValidMoves(Board board, string friendlyColor,
-        Dictionary<PlayerColor, Dictionary<PieceType, bool>> movementStates, bool IsCheck)
+        Dictionary<PlayerColor, Dictionary<PieceType, bool>> movementStates, bool isCheck)
     {
         var friendlyPieces = board.GetPiecePositionsByColor(friendlyColor);
         var allMoves = new List<(int x, int y, bool IsEnemy)>();
         foreach (var piece in friendlyPieces) {
-            allMoves.AddRange(GetValidMoves(piece.x, piece.y, board, friendlyColor, movementStates, IsCheck));
+            allMoves.AddRange(GetValidMoves(piece.x, piece.y, board, friendlyColor, movementStates, isCheck));
         }
         return allMoves;
     }

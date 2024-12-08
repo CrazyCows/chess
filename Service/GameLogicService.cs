@@ -1,6 +1,7 @@
 using chess.Model;
 using chess.Validators;
 using chess.Helper;
+using chess.Interfaces;
 
 
 namespace chess.Service;
@@ -9,22 +10,22 @@ public class GameLogicService
 {
     public event Action? TurnSwitched;
     public Board Board { get; private set; }
-    public MoveValidator MoveValidator { get; set; }
-    public CheckValidator CheckValidator { get; set; }
+    private IMoveValidator MoveValidator { get; set; }
+    public ICheckValidator CheckValidator { get; set; }
     public TimeTaking TimeTaking { get; set; }
-    public CastlingState CastlingState { get; set; }
-    public MinMax MinMax { get; set; }
-    public GameState GameState { get; set; }
+    private CastlingState CastlingState { get; set; }
+    private IMinMax MinMax { get; set; }
+    private GameState GameState { get; set; }
 
 
-    public GameLogicService()
+    public GameLogicService(IMoveValidator moveValidator, ICheckValidator checkValidator)
     {
         Board = new Board();
         Board.InitializeBoard();
-        MoveValidator = new MoveValidator();
-        CheckValidator = new CheckValidator();
+        MoveValidator = moveValidator;
+        CheckValidator = checkValidator;
+        MinMax = new MinMax(moveValidator);
         TimeTaking = new TimeTaking();
-        MinMax = new MinMax();
         GameState = new GameState();
         CastlingState = new CastlingState();
         StartGame();

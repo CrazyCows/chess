@@ -1,8 +1,9 @@
+using chess.Interfaces;
 using chess.Model.Pieces;
 
 namespace chess.Model;
 
-public class Board
+public class Board : IBoard
 {
     public Piece?[,] Squares { get; set; } 
 
