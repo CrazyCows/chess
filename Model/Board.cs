@@ -8,7 +8,6 @@ public class Board
 
     public Board() {
         Squares = new Piece[8,8];
-        InitializeBoard();
     }
 
     public List<(int x, int y)> GetPiecePositionsByColor(string color){
@@ -28,7 +27,7 @@ public class Board
         return positions;
     }
 
-    private void InitializeBoard()
+    public void InitializeBoard()
     {
         for (int i = 0; i < 8; i++)
         {
@@ -97,7 +96,7 @@ public class Board
                     Squares[0, 2] = new King("Black");
                 }
             }
-            Console.WriteLine("TRIGGERED");
+            // Console.WriteLine("TRIGGERED");
             return true;
         }
         return false;

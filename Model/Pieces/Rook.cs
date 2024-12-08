@@ -25,9 +25,8 @@ public class Rook(string Color) : Piece(Color)
                     }
 
                     moveList.Add((newPos.Item1, newPos.Item2, false));
-                    
-                }
             }
-            return moveList;
+        }
+        return moveList;
     }
 }

@@ -109,6 +109,10 @@
         };
         GameService.TurnSwitched += async () =>
         {
+            if (_isCheckmate)
+            {
+                return;
+            }
             await Task.Run(() =>
             {
                 lock (_lock)
