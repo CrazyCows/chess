@@ -1,18 +1,14 @@
-﻿using System.Drawing;
-using chess.Interfaces;
+﻿using chess.Interfaces;
 using chess.Model;
-using chess.Model.Pieces;
-using chess.Validators;
 
+namespace chess.Service;
 
-namespace chess.Helper;
-
-public class MinMax : IMinMax
+public class AiService : IAiService
     {
         private readonly int _maxDepth = 3;
         private IMoveValidator MoveValidator { get; }
 
-        public MinMax(IMoveValidator moveValidator)
+        public AiService(IMoveValidator moveValidator)
         {
             MoveValidator = moveValidator;
         }

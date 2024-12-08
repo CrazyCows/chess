@@ -27,7 +27,6 @@
     </div>
 </div>
 
-
 <div class="chessboard">
     @if (_isCheckmate)
     {
@@ -35,10 +34,7 @@
             <button @onclick="RestartGame">Restart Game</button>
         </div>
     }
-    
 
-    
-    
     @for (int row = 7; row >= 0; row--)
     {
         <div class="row">
@@ -47,8 +43,9 @@
                 var piece = GameService.Board.Squares[row, col];
                 bool isHighlighted = _validMoves.Any(m => m.x == row && m.y == col);
                 string cssClass = "square";
-                var currentRow = row; // Capture row
-                var currentCol = col; // Capture col
+                var currentRow = row;
+                var currentCol = col;
+
                 if (isHighlighted)
                 {
                     cssClass += " highlighted";
@@ -86,6 +83,7 @@
 
     protected override void OnInitialized()
     {
+        // Subscribe to check and checkmate events from GameLogicService
         GameService.IsCheck += async (checkStatus) =>
         {
             _isCheck = checkStatus;
@@ -96,23 +94,29 @@
             _isCheckmate = checkmateStatus;
             await InvokeAsync(StateHasChanged);
         };
-        GameService.TimeTaking.OnTimeUpdated += async () =>
+
+        // Subscribe to time updates from the TimeService exposed by GameLogicService
+        GameService.TimeService.OnTimeUpdated += async () =>
         {
-            (_whiteTime, _blackTime) = GameService.TimeTaking.GetRemainingTimes();
+            (_whiteTime, _blackTime) = GameService.TimeService.GetRemainingTimes();
             await InvokeAsync(StateHasChanged);
         };
-        GameService.TimeTaking.OnTimeExpired += async (losingPlayer) =>
+        GameService.TimeService.OnTimeExpired += async (losingPlayer) =>
         {
             _isCheckmate = true;
             Console.WriteLine($"{losingPlayer} ran out of time. Game Over!");
             await InvokeAsync(StateHasChanged);
         };
+
+        // Subscribe to turn switched event
         GameService.TurnSwitched += async () =>
         {
             if (_isCheckmate)
             {
                 return;
             }
+            // If the AI plays for Black, we can make the AI move here.
+            // This may run on a background thread, so we lock to ensure thread safety.
             await Task.Run(() =>
             {
                 lock (_lock)
@@ -122,11 +126,7 @@
             });
             await InvokeAsync(StateHasChanged);
         };
-
     }
-
-
-
 
     private async Task RestartGame()
     {
@@ -136,7 +136,8 @@
         _selectedRow = null;
         _selectedCol = null;
         _validMoves.Clear();
-        GameService.TimeTaking.ResetTimer();
+        GameService.TimeService.ResetTimer();
+        GameService.TimeService.StartTimer();
         await InvokeAsync(StateHasChanged);
     }
 
@@ -173,8 +174,6 @@
         int seconds = timeInSeconds % 60;
         return $"{minutes:D2}:{seconds:D2}";
     }
-    
-
 }
 
 

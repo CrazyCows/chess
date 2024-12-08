@@ -4,9 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using chess.Components;
 using chess.Components.Account;
 using chess.Data;
+using chess.Helper;
 using chess.Interfaces;
 using chess.Service;
 using chess.Validators;
+using IAiService = chess.Interfaces.IAiService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,9 +40,19 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
-builder.Services.AddSingleton<GameLogicService>();
+builder.Services.AddScoped<GameLogicService>();
 builder.Services.AddTransient<IMoveValidator, MoveValidator>();
 builder.Services.AddTransient<ICheckValidator, CheckValidator>();
+builder.Services.AddTransient<IMoveValidator, MoveValidator>();
+builder.Services.AddTransient<ICheckValidator, CheckValidator>();
+
+// AI and MinMax
+builder.Services.AddTransient<IAiService, AiService>();
+
+// State management
+builder.Services.AddTransient<IGameStateSerice, GameStateSerice>();
+builder.Services.AddTransient<IMoveService, MoveService>();
+builder.Services.AddTransient<ITimeService, TimeService>();
 
 
 var app = builder.Build();

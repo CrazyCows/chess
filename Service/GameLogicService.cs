@@ -1,101 +1,91 @@
-using chess.Model;
-using chess.Validators;
-using chess.Helper;
 using chess.Interfaces;
+using chess.Model;
 
-
-namespace chess.Service;
-
-public class GameLogicService
+namespace chess.Service
 {
-    public event Action? TurnSwitched;
-    public Board Board { get; private set; }
-    private IMoveValidator MoveValidator { get; set; }
-    public ICheckValidator CheckValidator { get; set; }
-    public TimeTaking TimeTaking { get; set; }
-    private CastlingState CastlingState { get; set; }
-    private IMinMax MinMax { get; set; }
-    private GameState GameState { get; set; }
-
-
-    public GameLogicService(IMoveValidator moveValidator, ICheckValidator checkValidator)
+    public class GameLogicService
     {
-        Board = new Board();
-        Board.InitializeBoard();
-        MoveValidator = moveValidator;
-        CheckValidator = checkValidator;
-        MinMax = new MinMax(moveValidator);
-        TimeTaking = new TimeTaking();
-        GameState = new GameState();
-        CastlingState = new CastlingState();
-        StartGame();
-    }
+        private readonly IGameStateSerice _gameStateManager;
+        private readonly IMoveService _moveService;
+        private readonly IAiService _aiStrategy;
+        public readonly ITimeService TimeService;
+        public readonly Board Board;
+        private readonly CastlingState _castlingState;
 
-    public List<(int x, int y, bool IsEnemy)> GetValidMoves(int x, int y)
-    {
-        var kk = CastlingState.MovementStates;
-        var moves = MoveValidator.GetValidMoves(x, y, Board, GameState.CurrentTurn, CastlingState.MovementStates,
-            GameState.Check);
-
-        return moves;
-    }
-
-    public event Action<bool>? IsCheck
-    {
-        add => GameState.IsCheck += value;
-        remove => GameState.IsCheck -= value;
-    }
-
-    public event Action<bool>? IsCheckMate
-    {
-        add => GameState.IsCheckMate += value;
-        remove => GameState.IsCheckMate -= value;
-    }
-
-    public void MakeMove(int fromColumn, int fromRow, int toColumn, int toRow)
-    {
-        Board.MovePiece(fromColumn, fromRow, toColumn, toRow);
-        GameState.CurrentTurn = GameState.CurrentTurn == "White" ? "Black" : "White";
-        CastlingState.MarkPieceMoved(fromColumn, fromRow);
-        TimeTaking.SwitchTurn(GameState.CurrentTurn);
-        GameState.CheckTurn(Board);
-        GameState.CheckMateTurn(MoveValidator.GetAllValidMoves(Board, GameState.CurrentTurn,
-            CastlingState.MovementStates, GameState.Check));
-        TurnSwitched?.Invoke();
-    }
-
-    public void MakeAiMove()
-    {
-        if (GameState.CurrentTurn == "Black")
+        public event Action? TurnSwitched;
+        public event Action<bool>? IsCheck
         {
-            Console.WriteLine("WTF");
-            var bestMove = MinMax.GetBestMove(Board, GameState, CastlingState, "Black");
-            Board.MovePiece(bestMove.fromX, bestMove.fromY, bestMove.toX, bestMove.toY);
-            GameState.CurrentTurn = "White";
-            CastlingState.MarkPieceMoved(bestMove.fromX, bestMove.fromY);
-            TimeTaking.SwitchTurn(GameState.CurrentTurn);
-            GameState.CheckTurn(Board);
-            GameState.CheckMateTurn(MoveValidator.GetAllValidMoves(Board, GameState.CurrentTurn,
-                CastlingState.MovementStates, GameState.Check));
+            add => _gameStateManager.OnCheck += value;
+            remove => _gameStateManager.OnCheck -= value;
         }
-    }
 
-    public string GetCurrentTurn()
-    {
-        return GameState.CurrentTurn;
-    }
+        public event Action<bool>? IsCheckMate
+        {
+            add => _gameStateManager.OnCheckMate += value;
+            remove => _gameStateManager.OnCheckMate -= value;
+        }
 
-    private void StartGame()
-    {
-        TimeTaking.CurrentTurn = GameState.CurrentTurn;
-        TimeTaking.StartTimer();
-    }
+        public GameLogicService(IGameStateSerice gameStateManager, 
+                                    IMoveService moveService, 
+                                    IAiService aiStrategy, 
+                                    ITimeService timeService)
+        {
+            _gameStateManager = gameStateManager;
+            _moveService = moveService;
+            _aiStrategy = aiStrategy;
+            TimeService = timeService;
 
-    public void Restart()
-    {
-        Board = new Board();
-        Board.InitializeBoard();
-        GameState.CurrentTurn = "White";
-        TimeTaking.StartTimer();
+            Board = new Board();
+            _castlingState = new CastlingState();
+            
+            StartGame();
+        }
+
+        public void StartGame()
+        {
+            _gameStateManager.StartGame(Board);
+            TimeService.CurrentTurn = _gameStateManager.CurrentTurn;
+            TimeService.StartTimer();
+        }
+
+        public List<(int x, int y, bool IsEnemy)> GetValidMoves(int x, int y)
+        {
+            return _moveService.GetValidMoves(Board, x, y, _gameStateManager.CurrentTurn, _castlingState, _gameStateManager.IsCheck);
+        }
+
+        public void MakeMove(int fromColumn, int fromRow, int toColumn, int toRow)
+        {
+            _moveService.MakeMove(Board, fromColumn, fromRow, toColumn, toRow, _gameStateManager.CurrentTurn, _castlingState);
+
+            // Switch turn in GameState and TimeService
+            _gameStateManager.CurrentTurn = _gameStateManager.CurrentTurn == "White" ? "Black" : "White";
+            TimeService.SwitchTurn(_gameStateManager.CurrentTurn);
+            
+            // Update the game state after the move
+            _gameStateManager.UpdateGameState(Board, _castlingState.MovementStates);
+
+            TurnSwitched?.Invoke();
+        }
+
+        public void MakeAiMove()
+        {
+            if (_gameStateManager.CurrentTurn == "Black")
+            {
+                var bestMove = _moveService.MakeAiMove(Board, _gameStateManager.CurrentTurn, _castlingState, _aiStrategy);
+                
+                _gameStateManager.CurrentTurn = "White";
+                TimeService.SwitchTurn(_gameStateManager.CurrentTurn);
+                _gameStateManager.UpdateGameState(Board, _castlingState.MovementStates);
+            }
+        }
+
+        public string GetCurrentTurn() => _gameStateManager.CurrentTurn;
+
+        public void Restart()
+        {
+            _gameStateManager.RestartGame(Board);
+            TimeService.ResetTimer();
+            TimeService.StartTimer();
+        }
     }
 }

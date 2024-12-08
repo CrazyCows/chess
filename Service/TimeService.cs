@@ -1,6 +1,8 @@
+using chess.Interfaces;
+
 namespace chess.Helper;
 
-public class TimeTaking
+public class TimeService : ITimeService
 {
     private int _whiteTimeLeft = 300; 
     private int _blackTimeLeft = 300; 
@@ -9,7 +11,7 @@ public class TimeTaking
     public event Action? OnTimeUpdated;
     public event Action<string>? OnTimeExpired;
 
-    public TimeTaking()
+    public TimeService()
     {
         _timer = new System.Timers.Timer(1000);
         _timer.Elapsed += OnTimerElapsed!;

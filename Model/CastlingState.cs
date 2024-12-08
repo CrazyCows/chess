@@ -62,15 +62,3 @@ public class CastlingState
     }
 }
 
-public enum PieceType
-{
-    King,
-    LeftRook,
-    RightRook
-}
-
-public enum PlayerColor
-{
-    White,
-    Black
-}
