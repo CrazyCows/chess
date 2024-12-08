@@ -11,7 +11,7 @@ public class MinMax
         private readonly int _maxDepth = 4;
         MoveValidator _moveValidator = new MoveValidator();
 
-        public (int fromX, int fromY, int toX, int toY) GetBestMove(Board board, GameState gameState, string currentTurn)
+        public (int fromX, int fromY, int toX, int toY) GetBestMove(Board board, GameState gameState, CastlingState castlingState, string currentTurn)
         {
             double bestValue = currentTurn == "Black" ? int.MinValue : int.MaxValue;
             (int fromX, int fromY, int toX, int toY) bestMove = (0, 0, 0, 0);
@@ -22,8 +22,9 @@ public class MinMax
             {
                 Board boardTemp = board.DeepCopy();
                 GameState gameTemp = gameState.DeepCopy();
+                CastlingState castlingStateTemp = castlingState.DeepCopy();
                 var validMoves = _moveValidator.GetValidMoves(piece.x, piece.y, boardTemp, 
-                    currentTurn, gameTemp.MovementStates, gameTemp.Check);
+                    currentTurn, castlingStateTemp.MovementStates, gameTemp.Check);
                 
                 foreach (var move in validMoves)
                 {
@@ -31,9 +32,10 @@ public class MinMax
                     //Console.WriteLine($"{piece.x} {piece.y} {move}");
                     Board clonedBoard = boardTemp.DeepCopy();
                     GameState gameTemp2 = gameState.DeepCopy();
+                    CastlingState castlingStateTemp2 = castlingState.DeepCopy();
                     clonedBoard.MovePiece(piece.x, piece.y, move.x, move.y);
 
-                    double boardValue = Minimax(clonedBoard, gameTemp2, _maxDepth - 1, 
+                    double boardValue = Minimax(clonedBoard, gameTemp2, castlingStateTemp2, _maxDepth - 1, 
                         currentTurn == "Black" ? false : true);
 
                     if ((currentTurn == "Black" && boardValue > bestValue) ||
@@ -49,7 +51,7 @@ public class MinMax
             return bestMove;
         }
 
-        private double Minimax(Board board, GameState gameState, int depth, bool isMaximizing)
+        private double Minimax(Board board, GameState gameState, CastlingState castlingState, int depth, bool isMaximizing)
         {
             if (depth == 0)
             {
@@ -63,16 +65,16 @@ public class MinMax
 
             foreach (var piece in pieces)
             {
-                GameState gameTemp = gameState.DeepCopy();
                 var validMoves = _moveValidator.GetValidMoves(piece.x, piece.y, board, currentTurn, 
-                    gameTemp.MovementStates, gameTemp.Check);
+                    castlingState.MovementStates, gameState.Check);
                 foreach (var move in validMoves)
                 {
                     var clonedBoard = board.DeepCopy();
-                    
+                    GameState gameTemp = gameState.DeepCopy();
+                    CastlingState castlingStateTemp = castlingState.DeepCopy();
                     clonedBoard.MovePiece(piece.x, piece.y, move.x, move.y);
 
-                    double boardValue = Minimax(clonedBoard, gameTemp, depth - 1, !isMaximizing);
+                    double boardValue = Minimax(clonedBoard, gameTemp, castlingStateTemp, depth - 1, !isMaximizing);
 
                     if (isMaximizing)
                     {

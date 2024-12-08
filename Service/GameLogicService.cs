@@ -12,6 +12,7 @@ public class GameLogicService
     public MoveValidator MoveValidator { get; set; }
     public CheckValidator CheckValidator { get; set; }
     public TimeTaking TimeTaking { get; set; }
+    public CastlingState CastlingState { get; set; }
     public MinMax MinMax { get; set; }
     public GameState GameState { get; set; }
 
@@ -25,12 +26,14 @@ public class GameLogicService
         TimeTaking = new TimeTaking();
         MinMax = new MinMax();
         GameState = new GameState();
+        CastlingState = new CastlingState();
         StartGame();
     }
 
     public List<(int x, int y, bool IsEnemy)> GetValidMoves(int x, int y)
     {
-        var moves = MoveValidator.GetValidMoves(x, y, Board, GameState.CurrentTurn, GameState.MovementStates,
+        var kk = CastlingState.MovementStates;
+        var moves = MoveValidator.GetValidMoves(x, y, Board, GameState.CurrentTurn, CastlingState.MovementStates,
             GameState.Check);
 
         return moves;
@@ -52,11 +55,11 @@ public class GameLogicService
     {
         Board.MovePiece(fromColumn, fromRow, toColumn, toRow);
         GameState.CurrentTurn = GameState.CurrentTurn == "White" ? "Black" : "White";
-        GameState.KingOrRookMoved(fromColumn, fromRow);
+        CastlingState.MarkPieceMoved(fromColumn, fromRow);
         TimeTaking.SwitchTurn(GameState.CurrentTurn);
         GameState.CheckTurn(Board);
         GameState.CheckMateTurn(MoveValidator.GetAllValidMoves(Board, GameState.CurrentTurn,
-            GameState.MovementStates, GameState.Check));
+            CastlingState.MovementStates, GameState.Check));
         TurnSwitched?.Invoke();
     }
 
@@ -65,14 +68,14 @@ public class GameLogicService
         if (GameState.CurrentTurn == "Black")
         {
             Console.WriteLine("WTF");
-            var bestMove = MinMax.GetBestMove(Board, GameState, "Black");
+            var bestMove = MinMax.GetBestMove(Board, GameState, CastlingState, "Black");
             Board.MovePiece(bestMove.fromX, bestMove.fromY, bestMove.toX, bestMove.toY);
             GameState.CurrentTurn = "White";
-            GameState.KingOrRookMoved(bestMove.fromX, bestMove.fromY);
+            CastlingState.MarkPieceMoved(bestMove.fromX, bestMove.fromY);
             TimeTaking.SwitchTurn(GameState.CurrentTurn);
             GameState.CheckTurn(Board);
             GameState.CheckMateTurn(MoveValidator.GetAllValidMoves(Board, GameState.CurrentTurn,
-                GameState.MovementStates, GameState.Check));
+                CastlingState.MovementStates, GameState.Check));
         }
     }
 

@@ -19,46 +19,28 @@ public class MoveValidator
         {
             return false;
         }
-
         var friendlyPieces = board.GetPiecePositionsByColor(currentTurn);
         var enemyPieces = board.GetPiecePositionsByColor(currentTurn == "White" ? "Black" : "White");
-        board.Squares[to.x, to.y] = toPiece;
-        board.Squares[from.x, from.y] = fromPiece;
-
-
-        foreach (var ep in enemyPieces) {
+        
+        foreach (var ep in enemyPieces)
+        {
             Piece piece = squares[ep.x, ep.y]!;
-            if (piece == null)
+            var moves = piece.GetMoves((ep.x, ep.y), friendlyPieces, enemyPieces);
+            if (moves.Any(move => move.x == kingPos.Value.x && move.y == kingPos.Value.y))
             {
-                Console.WriteLine("PIECE IS NULL FOR SOME REASON?!");
-            }
-            try
-            {
-                var moves = piece.GetMoves((ep.x, ep.y), friendlyPieces, enemyPieces);
-                if (moves == null) return false;
-                if (moves.Any(move => move.x == kingPos.Value.x && move.y == kingPos.Value.y))
-                {
-                    return false;
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("HELLO");
-                Console.WriteLine(currentTurn);
-                Console.WriteLine(ep);
-                Console.WriteLine($"{kingPos.Value.x}, {kingPos.Value.y}");
-                Console.WriteLine(e);
+                board.Squares[to.x, to.y] = toPiece;
+                board.Squares[from.x, from.y] = fromPiece;
                 return false;
             }
+
         }
+        board.Squares[to.x, to.y] = toPiece;
+        board.Squares[from.x, from.y] = fromPiece;
         return true;
     }
-
     
-
-
     private List<(int x, int y, bool IsEnemy)> GetValidCastlingMoves(int x, int y, Board board, 
-        string friendlyColor, Dictionary<GameState.PlayerColor, Dictionary<GameState.PieceType, bool>> movementStates)
+        string friendlyColor, Dictionary<PlayerColor, Dictionary<PieceType, bool>> movementStates)
     {
         List<(int x, int y, bool IsEnemy)> moves = new List<(int x, int y, bool IsEnemy)>();
         if (!(board.Squares[x,y]?.GetType() == typeof(King)))
@@ -66,9 +48,9 @@ public class MoveValidator
             return moves;
         }
         //Console.WriteLine($"x: {x}, y: {y}");
-        if (!movementStates[GameState.PlayerColor.White][GameState.PieceType.King]){
+        if (!movementStates[PlayerColor.White][PieceType.King]){
             if (board.Squares[7,0] != null && board.Squares[7,0]!.Color == "White" 
-                                           && friendlyColor == "White" && !movementStates[GameState.PlayerColor.White][GameState.PieceType.LeftRook] 
+                                           && friendlyColor == "White" && !movementStates[PlayerColor.White][PieceType.LeftRook] 
                                            && board.Squares[7,1] == null && board.Squares[7,2] == null 
                                            && board.Squares[7,3] == null) 
             {
@@ -83,7 +65,7 @@ public class MoveValidator
                 board.Squares[7,3] = null;
             }
             if (board.Squares[7,7] != null && board.Squares[7,7]!.Color == "White" 
-                                           && friendlyColor == "White" && !movementStates[GameState.PlayerColor.White][GameState.PieceType.RightRook]
+                                           && friendlyColor == "White" && !movementStates[PlayerColor.White][PieceType.RightRook]
                                            && board.Squares[7,5] == null && board.Squares[7,6] == null)  
             {
                 board.Squares[7,7] = null;
@@ -98,10 +80,10 @@ public class MoveValidator
             }
         }
         
-        if (!movementStates[GameState.PlayerColor.Black][GameState.PieceType.King])
+        if (!movementStates[PlayerColor.Black][PieceType.King])
         {
             if (board.Squares[0,0] != null && board.Squares[0,0]!.Color == "Black" 
-                                           && friendlyColor == "Black" && !movementStates[GameState.PlayerColor.Black][GameState.PieceType.LeftRook]
+                                           && friendlyColor == "Black" && !movementStates[PlayerColor.Black][PieceType.LeftRook]
                     && board.Squares[0,1] == null && board.Squares[0,2] == null && board.Squares[0,3] == null) 
             {
                 board.Squares[0,0] = null;
@@ -115,7 +97,7 @@ public class MoveValidator
                 board.Squares[0,3] = null;
             }
             if (board.Squares[0,7] != null && board.Squares[0,7]!.Color == "Black" 
-                                           && friendlyColor == "Black" && !movementStates[GameState.PlayerColor.Black][GameState.PieceType.RightRook]
+                                           && friendlyColor == "Black" && !movementStates[PlayerColor.Black][PieceType.RightRook]
                     && board.Squares[0,5] == null && board.Squares[0,6] == null) 
             {
 
@@ -137,31 +119,31 @@ public class MoveValidator
 
 
     public List<(int x, int y, bool IsEnemy)> GetValidMoves(int x, int y, Board board, string friendlyColor,
-        Dictionary<GameState.PlayerColor, Dictionary<GameState.PieceType, bool>> movementStates, bool IsCheck)
+        Dictionary<PlayerColor, Dictionary<PieceType, bool>> movementStates, bool IsCheck)
     {
         var friendlyPieces = board.GetPiecePositionsByColor(friendlyColor);
         var enemyPieces = board.GetPiecePositionsByColor(friendlyColor == "White" ? "Black" : "White");
         Piece piece = board.Squares[x, y]!;
 
         List<(int x, int y, bool IsEnemy)> moves = piece.GetMoves((x, y), enemyPieces, friendlyPieces);
-        // var finalMoves = new List<(int x, int y, bool IsEnemy)>();
+        var finalMoves = new List<(int x, int y, bool IsEnemy)>();
 
-        //foreach (var move in moves)
-        //{
-        //    if (ValidateMove((x, y), (move.x, move.y), board, friendlyColor))
-        //    {
-        //        finalMoves.Add(move);
-        //    } 
-        //}
+        foreach (var move in moves)
+        {
+            if (ValidateMove((x, y), (move.x, move.y), board, friendlyColor))
+            {
+                finalMoves.Add(move);
+            } 
+        }
         if (!IsCheck)
         {
-            moves.AddRange(GetValidCastlingMoves(x,y, board, friendlyColor, movementStates));
+            finalMoves.AddRange(GetValidCastlingMoves(x,y, board, friendlyColor, movementStates));
         }
-        return moves;
+        return finalMoves;
     }
 
     public List<(int x, int y, bool IsEnemy)> GetAllValidMoves(Board board, string friendlyColor,
-        Dictionary<GameState.PlayerColor, Dictionary<GameState.PieceType, bool>> movementStates, bool IsCheck)
+        Dictionary<PlayerColor, Dictionary<PieceType, bool>> movementStates, bool IsCheck)
     {
         var friendlyPieces = board.GetPiecePositionsByColor(friendlyColor);
         var allMoves = new List<(int x, int y, bool IsEnemy)>();
