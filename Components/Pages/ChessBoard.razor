@@ -83,7 +83,6 @@
 
     protected override void OnInitialized()
     {
-        // Subscribe to check and checkmate events from GameLogicService
         GameService.IsCheck += async checkStatus =>
         {
             _isCheck = checkStatus;
@@ -95,7 +94,6 @@
             await InvokeAsync(StateHasChanged);
         };
 
-        // Subscribe to time updates from the TimeService exposed by GameLogicService
         GameService.TimeService.OnTimeUpdated += async () =>
         {
             (_whiteTime, _blackTime) = GameService.TimeService.GetRemainingTimes();
@@ -108,7 +106,6 @@
             await InvokeAsync(StateHasChanged);
         };
 
-        // Subscribe to turn switched event
         GameService.TurnSwitched += async () =>
         {
             if (_isCheckmate)
@@ -116,8 +113,6 @@
                 return;
             }
 
-            // If the AI plays for Black, we can make the AI move here.
-            // This may run on a background thread, so we lock to ensure thread safety.
             await Task.Run(() =>
             {
                 lock (_lock)
