@@ -1,48 +1,53 @@
 using chess.Interfaces;
 using chess.Model;
-using chess.Validators;
 
-namespace chess.Service
+namespace chess.Service;
+
+public class GameStateSerice : IGameStateSerice
 {
-    public class GameStateSerice : IGameStateSerice
+    private readonly ICheckValidator _checkValidator;
+    private readonly IMoveValidator _moveValidator;
+    private readonly IBoard _board;
+    private readonly ICastlingService _castlingService;
+
+    public GameStateSerice(ICheckValidator checkValidator, 
+        IMoveValidator moveValidator,
+        IBoard board,
+        ICastlingService castlingService)
     {
-        private readonly ICheckValidator _checkValidator;
-        private readonly IMoveValidator _moveValidator;
+        _checkValidator = checkValidator;
+        _moveValidator = moveValidator;
+        _board = board;
+        _castlingService = castlingService;
+    }
 
-        public event Action<bool>? OnCheck;
-        public event Action<bool>? OnCheckMate;
+    public event Action<bool>? OnCheck;
+    public event Action<bool>? OnCheckMate;
 
-        public string CurrentTurn { get; set; } = "White";
-        public bool IsCheck { get; private set; }
-        public bool IsCheckMate { get; private set; }
+    public string CurrentTurn { get; set; } = "White";
+    public bool IsCheck { get; private set; }
+    public bool IsCheckMate { get; private set; }
 
-        public GameStateSerice(ICheckValidator checkValidator, IMoveValidator moveValidator)
-        {
-            _checkValidator = checkValidator;
-            _moveValidator = moveValidator;
-        }
+    public void StartGame()
+    {
+        _board.InitializeBoard();
+        CurrentTurn = "White";
+        IsCheck = false;
+        IsCheckMate = false;
+    }
 
-        public void StartGame(Board board)
-        {
-            board.InitializeBoard();
-            CurrentTurn = "White";
-            IsCheck = false;
-            IsCheckMate = false;
-        }
+    public void UpdateGameState()
+    {
+        IsCheck = _checkValidator.Check(_board, CurrentTurn);
+        OnCheck?.Invoke(IsCheck);
+        var allValidMoves = _moveValidator.GetAllValidMoves(_board, CurrentTurn, 
+            _castlingService.MovementStates, IsCheck);
+        IsCheckMate = _checkValidator.Checkmate(allValidMoves);
+        OnCheckMate?.Invoke(IsCheckMate);
+    }
 
-        public void UpdateGameState(Board board, Dictionary<PlayerColor, Dictionary<PieceType, bool>> movementStates)
-        {
-            IsCheck = _checkValidator.Check(board, CurrentTurn);
-            OnCheck?.Invoke(IsCheck);
-
-            var allValidMoves = _moveValidator.GetAllValidMoves(board, CurrentTurn, movementStates, IsCheck);
-            IsCheckMate = _checkValidator.Checkmate(allValidMoves);
-            OnCheckMate?.Invoke(IsCheckMate);
-        }
-
-        public void RestartGame(Board board)
-        {
-            StartGame(board);
-        }
+    public void RestartGame()
+    {
+        StartGame();
     }
 }

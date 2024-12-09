@@ -1,40 +1,41 @@
 using chess.Interfaces;
 using chess.Model;
 
-namespace chess.Service
+namespace chess.Service;
+
+public class MoveService : IMoveService
 {
-    public class MoveService : IMoveService
+    private readonly IMoveValidator _moveValidator;
+    private readonly IBoard _board;
+    private readonly ICastlingService _castlingService;
+    private readonly IAiService _aiService;
+
+    public MoveService(IMoveValidator moveValidator, IBoard board, ICastlingService castlingService, IAiService aiService)
     {
-        private readonly IMoveValidator _moveValidator;
+        _moveValidator = moveValidator;
+        _board = board;
+        _castlingService = castlingService;
+        _aiService = aiService;
+    }
 
-        public MoveService(IMoveValidator moveValidator)
-        {
-            _moveValidator = moveValidator;
-        }
+    public void MakeMove(int fromColumn, int fromRow, int toColumn, int toRow)
+    {
+        _board.MovePiece(fromColumn, fromRow, toColumn, toRow);
+        _castlingService.MarkPieceMoved(fromColumn, fromRow);
+    }
 
-        public void MakeMove(Board board, int fromColumn, int fromRow, int toColumn, int toRow, 
-            string currentTurn, CastlingState castlingState)
-        {
-            board.MovePiece(fromColumn, fromRow, toColumn, toRow);
-            castlingState.MarkPieceMoved(fromColumn, fromRow);
-        }
 
-        
+    public (int fromX, int fromY, int toX, int toY) MakeAiMove(string currentTurn)
+    {
+        var bestMove = _aiService.GetBestMove(currentTurn);
+        _board.MovePiece(bestMove.fromX, bestMove.fromY, bestMove.toX, bestMove.toY);
+        _castlingService.MarkPieceMoved(bestMove.fromX, bestMove.fromY);
+        return bestMove;
+    }
 
-        public (int fromX, int fromY, int toX, int toY) MakeAiMove(Board board, string currentTurn, 
-            CastlingState castlingState, IAiService aiStrategy)
-        {
-            var gameState = new GameState { CurrentTurn = currentTurn };
-            var bestMove = aiStrategy.GetBestMove(board, gameState, castlingState, currentTurn);
-            board.MovePiece(bestMove.fromX, bestMove.fromY, bestMove.toX, bestMove.toY);
-            castlingState.MarkPieceMoved(bestMove.fromX, bestMove.fromY);
-            return bestMove;
-        }
-
-        public List<(int x, int y, bool IsEnemy)> GetValidMoves(Board board, int x, int y, string currentTurn,
-            CastlingState castlingState, bool isCheck)
-        {
-            return _moveValidator.GetValidMoves(x, y, board, currentTurn, castlingState.MovementStates, isCheck);
-        }
+    public List<(int x, int y, bool IsEnemy)> GetValidMoves(int x, int y, string currentTurn,
+        bool isCheck)
+    {
+        return _moveValidator.GetValidMoves(x, y, _board, currentTurn, _castlingService.MovementStates, isCheck);
     }
 }

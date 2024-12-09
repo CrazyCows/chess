@@ -1,21 +1,24 @@
+using System.Timers;
 using chess.Interfaces;
+using Timer = System.Timers.Timer;
 
-namespace chess.Helper;
+namespace chess.Service;
 
 public class TimeService : ITimeService
 {
-    private int _whiteTimeLeft = 300; 
-    private int _blackTimeLeft = 300; 
-    private readonly System.Timers.Timer _timer;
-    public string CurrentTurn { get; set; } = "White";
-    public event Action? OnTimeUpdated;
-    public event Action<string>? OnTimeExpired;
+    private readonly Timer _timer;
+    private int _blackTimeLeft = 300;
+    private int _whiteTimeLeft = 300;
 
     public TimeService()
     {
-        _timer = new System.Timers.Timer(1000);
+        _timer = new Timer(1000);
         _timer.Elapsed += OnTimerElapsed!;
     }
+
+    public string CurrentTurn { get; set; } = "White";
+    public event Action? OnTimeUpdated;
+    public event Action<string>? OnTimeExpired;
 
     public void StartTimer()
     {
@@ -40,7 +43,12 @@ public class TimeService : ITimeService
         CurrentTurn = currentTurn;
     }
 
-    private void OnTimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
+    public (int whiteTime, int blackTime) GetRemainingTimes()
+    {
+        return (_whiteTimeLeft, _blackTimeLeft);
+    }
+
+    private void OnTimerElapsed(object sender, ElapsedEventArgs e)
     {
         if (CurrentTurn == "White")
         {
@@ -64,10 +72,5 @@ public class TimeService : ITimeService
         }
 
         OnTimeUpdated?.Invoke();
-    }
-
-    public (int whiteTime, int blackTime) GetRemainingTimes()
-    {
-        return (_whiteTimeLeft, _blackTimeLeft);
     }
 }

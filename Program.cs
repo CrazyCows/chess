@@ -1,13 +1,13 @@
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using chess.Components;
 using chess.Components.Account;
 using chess.Data;
-using chess.Helper;
 using chess.Interfaces;
+using chess.Model;
 using chess.Service;
 using chess.Validators;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using IAiService = chess.Interfaces.IAiService;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -41,18 +41,16 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 builder.Services.AddScoped<GameLogicService>();
-builder.Services.AddTransient<IMoveValidator, MoveValidator>();
-builder.Services.AddTransient<ICheckValidator, CheckValidator>();
+builder.Services.AddScoped<IBoard, Board>(); 
 builder.Services.AddTransient<IMoveValidator, MoveValidator>();
 builder.Services.AddTransient<ICheckValidator, CheckValidator>();
 
-// AI and MinMax
 builder.Services.AddTransient<IAiService, AiService>();
 
-// State management
-builder.Services.AddTransient<IGameStateSerice, GameStateSerice>();
+builder.Services.AddScoped<IGameStateSerice, GameStateSerice>();
 builder.Services.AddTransient<IMoveService, MoveService>();
-builder.Services.AddTransient<ITimeService, TimeService>();
+builder.Services.AddScoped<ITimeService, TimeService>();
+builder.Services.AddTransient<ICastlingService, CastlingService>();
 
 
 var app = builder.Build();
@@ -64,7 +62,7 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
+    app.UseExceptionHandler("/Error", true);
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }

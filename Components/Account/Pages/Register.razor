@@ -1,11 +1,10 @@
 ﻿@page "/Account/Register"
-
 @using System.ComponentModel.DataAnnotations
 @using System.Text
 @using System.Text.Encodings.Web
+@using chess.Data
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
-@using chess.Data
 
 @inject UserManager<ApplicationUser> UserManager
 @inject IUserStore<ApplicationUser> UserStore
@@ -22,23 +21,28 @@
 <div class="row">
     <div class="col-lg-6">
         <StatusMessage Message="@Message"/>
-        <EditForm Model="Input" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="RegisterUser" FormName="register">
+        <EditForm Model="Input" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="RegisterUser"
+                  FormName="register">
             <DataAnnotationsValidator/>
             <h2>Create a new account.</h2>
             <hr/>
             <ValidationSummary class="text-danger" role="alert"/>
             <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com"/>
+                <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username"
+                           aria-required="true" placeholder="name@example.com"/>
                 <label for="Input.Email">Email</label>
                 <ValidationMessage For="() => Input.Email" class="text-danger"/>
             </div>
             <div class="form-floating mb-3">
-                <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password"/>
+                <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control"
+                           autocomplete="new-password" aria-required="true" placeholder="password"/>
                 <label for="Input.Password">Password</label>
                 <ValidationMessage For="() => Input.Password" class="text-danger"/>
             </div>
             <div class="form-floating mb-3">
-                <InputText type="password" @bind-Value="Input.ConfirmPassword" id="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password"/>
+                <InputText type="password" @bind-Value="Input.ConfirmPassword" id="Input.ConfirmPassword"
+                           class="form-control" autocomplete="new-password" aria-required="true"
+                           placeholder="password"/>
                 <label for="Input.ConfirmPassword">Confirm Password</label>
                 <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger"/>
             </div>
@@ -57,7 +61,7 @@
 @code {
     private IEnumerable<IdentityError>? identityErrors;
 
-    [SupplyParameterFromForm] private InputModel Input { get; set; } = new();
+    [SupplyParameterFromForm] private InputModel Input { get; } = new();
 
     [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
 
@@ -93,10 +97,10 @@
         {
             RedirectManager.RedirectTo(
                 "Account/RegisterConfirmation",
-                new() { ["email"] = Input.Email, ["returnUrl"] = ReturnUrl });
+                new Dictionary<string, object?> { ["email"] = Input.Email, ["returnUrl"] = ReturnUrl });
         }
 
-        await SignInManager.SignInAsync(user, isPersistent: false);
+        await SignInManager.SignInAsync(user, false);
         RedirectManager.RedirectTo(ReturnUrl);
     }
 

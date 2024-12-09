@@ -35,14 +35,14 @@
         </div>
     }
 
-    @for (int row = 7; row >= 0; row--)
+    @for (var row = 7; row >= 0; row--)
     {
         <div class="row">
-            @for (int col = 0; col < 8; col++)
+            @for (var col = 0; col < 8; col++)
             {
                 var piece = GameService.Board.Squares[row, col];
-                bool isHighlighted = _validMoves.Any(m => m.x == row && m.y == col);
-                string cssClass = "square";
+                var isHighlighted = _validMoves.Any(m => m.x == row && m.y == col);
+                var cssClass = "square";
                 var currentRow = row;
                 var currentCol = col;
 
@@ -71,25 +71,25 @@
 </div>
 
 @code {
-    private bool _isCheck = false;
-    private bool _isCheckmate = false;
+    private bool _isCheck;
+    private bool _isCheckmate;
     private int _whiteTime;
     private int _blackTime;
 
-    private int? _selectedRow = null;
-    private int? _selectedCol = null;
+    private int? _selectedRow;
+    private int? _selectedCol;
     private List<(int x, int y, bool IsEnemy)> _validMoves = new();
-    private static readonly object _lock = new object();
+    private static readonly object _lock = new();
 
     protected override void OnInitialized()
     {
         // Subscribe to check and checkmate events from GameLogicService
-        GameService.IsCheck += async (checkStatus) =>
+        GameService.IsCheck += async checkStatus =>
         {
             _isCheck = checkStatus;
             await InvokeAsync(StateHasChanged);
         };
-        GameService.IsCheckMate += async (checkmateStatus) =>
+        GameService.IsCheckMate += async checkmateStatus =>
         {
             _isCheckmate = checkmateStatus;
             await InvokeAsync(StateHasChanged);
@@ -101,7 +101,7 @@
             (_whiteTime, _blackTime) = GameService.TimeService.GetRemainingTimes();
             await InvokeAsync(StateHasChanged);
         };
-        GameService.TimeService.OnTimeExpired += async (losingPlayer) =>
+        GameService.TimeService.OnTimeExpired += async losingPlayer =>
         {
             _isCheckmate = true;
             Console.WriteLine($"{losingPlayer} ran out of time. Game Over!");
@@ -115,6 +115,7 @@
             {
                 return;
             }
+
             // If the AI plays for Black, we can make the AI move here.
             // This may run on a background thread, so we lock to ensure thread safety.
             await Task.Run(() =>
@@ -153,7 +154,7 @@
                 _selectedRow = row;
                 _selectedCol = col;
                 var moves = GameService.GetValidMoves(row, col);
-                _validMoves = moves ?? new();
+                _validMoves = moves ?? new List<(int x, int y, bool IsEnemy)>();
             }
         }
         else
@@ -162,6 +163,7 @@
             {
                 GameService.MakeMove(_selectedRow.Value, _selectedCol.Value, row, col);
             }
+
             _selectedRow = null;
             _selectedCol = null;
             _validMoves.Clear();
@@ -170,103 +172,103 @@
 
     private string FormatTime(int timeInSeconds)
     {
-        int minutes = timeInSeconds / 60;
-        int seconds = timeInSeconds % 60;
+        var minutes = timeInSeconds / 60;
+        var seconds = timeInSeconds % 60;
         return $"{minutes:D2}:{seconds:D2}";
     }
+
 }
 
 
 <style>
     .game-info {
-    margin-bottom: 10px;
-    font-family: Arial, sans-serif;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+        margin-bottom: 10px;
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
 
-.turn-indicator {
-    font-size: 18px;
-}
+    .turn-indicator {
+        font-size: 18px;
+    }
 
-.status-indicator {
-    font-size: 18px;
-}
+    .status-indicator {
+        font-size: 18px;
+    }
 
-.check-status, .checkmate-status {
-    margin-right: 10px;
-    font-weight: bold;
-    color: red;
-}
+    .check-status, .checkmate-status {
+        margin-right: 10px;
+        font-weight: bold;
+        color: red;
+    }
 
-.timer {
-    font-size: 16px;
-}
+    .timer {
+        font-size: 16px;
+    }
 
-.chessboard {
-    position: relative;
-    display: inline-block;
-    border: 2px solid black;
-}
+    .chessboard {
+        position: relative;
+        display: inline-block;
+        border: 2px solid black;
+    }
 
-.row {
-    display: flex;
-}
+    .row {
+        display: flex;
+    }
 
-.square {
-    width: 60px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+    .square {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 
-.light {
-    background-color: #f0d9b5;
-}
+    .light {
+        background-color: #f0d9b5;
+    }
 
-.dark {
-    background-color: #b58863;
-}
+    .dark {
+        background-color: #b58863;
+    }
 
-.highlighted {
-    background-color: yellow;
-}
+    .highlighted {
+        background-color: yellow;
+    }
 
-.piece {
-    font-size: 40px;
-}
+    .piece {
+        font-size: 40px;
+    }
 
 
+    .game-controls {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 10;
+        display: none; /* Initially hidden */
+    }
 
-.game-controls {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 10;
-    display: none; /* Initially hidden */
-}
+    .game-controls button {
+        padding: 10px 20px;
+        font-size: 16px;
+        border: none;
+        border-radius: 5px;
+        background-color: #4CAF50;
+        color: white;
+        cursor: pointer;
+    }
 
-.game-controls button {
-    padding: 10px 20px;
-    font-size: 16px;
-    border: none;
-    border-radius: 5px;
-    background-color: #4CAF50;
-    color: white;
-    cursor: pointer;
-}
+    .game-controls button:hover {
+        background-color: #45a049;
+    }
 
-.game-controls button:hover {
-    background-color: #45a049;
-}
-
-/* Display the controls only when the game ends */
-.chessboard .game-controls {
-    display: block;
-}
+    /* Display the controls only when the game ends */
+    .chessboard .game-controls {
+        display: block;
+    }
 
 
 </style>

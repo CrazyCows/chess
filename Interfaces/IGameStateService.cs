@@ -1,16 +1,15 @@
 using chess.Model;
 
-namespace chess.Interfaces
+namespace chess.Interfaces;
+
+public interface IGameStateSerice
 {
-    public interface IGameStateSerice
-    {
-        string CurrentTurn { get; set; }
-        bool IsCheck { get; }
-        bool IsCheckMate { get; }
-        void StartGame(Board board);
-        void UpdateGameState(Board board, Dictionary<PlayerColor, Dictionary<PieceType, bool>> movementStates);
-        void RestartGame(Board board);
-        event Action<bool>? OnCheck;
-        event Action<bool>? OnCheckMate;
-    }
+    string CurrentTurn { get; set; }
+    bool IsCheck { get; }
+    bool IsCheckMate { get; }
+    void StartGame();
+    void UpdateGameState();
+    void RestartGame();
+    event Action<bool>? OnCheck;
+    event Action<bool>? OnCheckMate;
 }
