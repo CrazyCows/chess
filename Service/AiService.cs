@@ -45,7 +45,7 @@ public class AiService : IAiService
                 var castlingStateTemp2 = CastlingService.DeepCopy();
                 clonedBoard.MovePiece(piece.x, piece.y, move.x, move.y);
                 isCheck = CheckValidator.Check(boardTemp, currentTurn);
-                var boardValue = Minimax(clonedBoard, castlingStateTemp2, isCheck, _maxDepth - 1,
+                var boardValue = Minimax(clonedBoard, castlingStateTemp2, isCheck, _maxDepth,
                     currentTurn != "Black");
 
                 if ((currentTurn == "Black" && boardValue > bestValue) ||

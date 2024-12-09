@@ -40,16 +40,14 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+builder.Services.AddSingleton<IMoveValidator, MoveValidator>();
+builder.Services.AddSingleton<ICheckValidator, CheckValidator>();
 builder.Services.AddScoped<GameLogicService>();
 builder.Services.AddScoped<IBoard, Board>(); 
-builder.Services.AddTransient<IMoveValidator, MoveValidator>();
-builder.Services.AddTransient<ICheckValidator, CheckValidator>();
-
+builder.Services.AddTransient<IGameStateSerice, GameStateSerice>();
+builder.Services.AddTransient<ITimeService, TimeService>();
 builder.Services.AddTransient<IAiService, AiService>();
-
-builder.Services.AddScoped<IGameStateSerice, GameStateSerice>();
 builder.Services.AddTransient<IMoveService, MoveService>();
-builder.Services.AddScoped<ITimeService, TimeService>();
 builder.Services.AddTransient<ICastlingService, CastlingService>();
 
 
