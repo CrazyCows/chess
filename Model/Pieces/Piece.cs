@@ -25,4 +25,6 @@ public abstract class Piece(string color) : IPieces
     {
         return (position.x + posToAdd.x, position.y + posToAdd.y);
     }
+    
+
 }

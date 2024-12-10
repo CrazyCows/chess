@@ -8,6 +8,7 @@ namespace chess.Interfaces
         Dictionary<PlayerColor, Dictionary<PieceType, bool>> MovementStates { get; }
 
         void MarkPieceMoved(int column, int row);
+        void ResetMovementStates();
 
         ICastlingService DeepCopy();
     }

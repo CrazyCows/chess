@@ -20,11 +20,11 @@ builder.Services.AddSingleton<IMoveValidator, MoveValidator>();
 builder.Services.AddSingleton<ICheckValidator, CheckValidator>();
 builder.Services.AddScoped<GameLogicService>();
 builder.Services.AddScoped<IBoard, Board>(); 
+builder.Services.AddScoped<ICastlingService, CastlingService>();
 builder.Services.AddTransient<IGameStateSerice, GameStateSerice>();
 builder.Services.AddTransient<ITimeService, TimeService>();
 builder.Services.AddTransient<IAiService, AiService>();
 builder.Services.AddTransient<IMoveService, MoveService>();
-builder.Services.AddTransient<ICastlingService, CastlingService>();
 
 
 var app = builder.Build();

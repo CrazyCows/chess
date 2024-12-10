@@ -1,6 +1,8 @@
+using chess.Interfaces;
+
 namespace chess.Model.Pieces;
 
-public class King(string Color) : Piece(Color)
+public class King(string Color) : Piece(Color), ICopyableT<Piece>
 {
     public override string Symbol => Color == "White" ? "♔" : "♚";
 
@@ -38,5 +40,10 @@ public class King(string Color) : Piece(Color)
         }
 
         return moveList;
+    }
+    
+    public Piece Copy()
+    {
+        return new King(Color);
     }
 }

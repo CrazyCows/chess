@@ -1,6 +1,8 @@
+using chess.Interfaces;
+
 namespace chess.Model.Pieces;
 
-public class Pawn(string Color) : Piece(Color)
+public class Pawn(string Color) : Piece(Color), ICopyableT<Piece>
 {
     public override string Symbol => Color == "White" ? "♙" : "♟";
     public override double Weight => 0.2;
@@ -35,5 +37,9 @@ public class Pawn(string Color) : Piece(Color)
             moveList.Add((rightPos.Item1, rightPos.Item2, true));
 
         return moveList;
+    }
+    public Piece Copy()
+    {
+        return new Pawn(Color);
     }
 }

@@ -5,12 +5,7 @@ namespace chess.Model;
 
 public class Board : IBoard
 {
-    public Board()
-    {
-        Squares = new Piece[8, 8];
-    }
-
-    public Piece?[,] Squares { get; set; }
+    public Piece?[,] Squares { get; private set; } = new Piece[8, 8];
 
     public List<(int x, int y)> GetPiecePositionsByColor(string color)
     {
@@ -28,6 +23,7 @@ public class Board : IBoard
 
     public void InitializeBoard()
     {
+        Squares = new Piece[8, 8];
         for (var i = 0; i < 8; i++)
         {
             Squares[1, i] = new Pawn("Black");
@@ -83,25 +79,22 @@ public class Board : IBoard
     {
         var copy = new Board();
         for (var i = 0; i < Squares.GetLength(0); i++)
-        for (var j = 0; j < Squares.GetLength(1); j++)
-            if (Squares[i, j] != null)
+        {
+            for (var j = 0; j < Squares.GetLength(1); j++)
             {
-                if (Squares[i, j]!.GetType() == typeof(King))
-                    copy.Squares[i, j] = new King(Squares[i, j]!.Color);
-                else if (Squares[i, j]!.GetType() == typeof(Rook))
-                    copy.Squares[i, j] = new Rook(Squares[i, j]!.Color);
-                else if (Squares[i, j]!.GetType() == typeof(Queen))
-                    copy.Squares[i, j] = new Queen(Squares[i, j]!.Color);
-                else if (Squares[i, j]!.GetType() == typeof(Pawn))
-                    copy.Squares[i, j] = new Pawn(Squares[i, j]!.Color);
-                else if (Squares[i, j]!.GetType() == typeof(Bishop))
-                    copy.Squares[i, j] = new Bishop(Squares[i, j]!.Color);
-                else if (Squares[i, j]!.GetType() == typeof(Knight))
-                    copy.Squares[i, j] = new Knight(Squares[i, j]!.Color);
+                if (Squares[i, j] is ICopyableT<Piece> copyablePiece)
+                {
+                    copy.Squares[i, j] = copyablePiece.Copy();
+                }
+                else
+                {
+                    copy.Squares[i, j] = null;
+                }
             }
-
+        }
         return copy;
     }
+
 
     private bool CastlingMove(int toRow, int toColumn, Piece piece)
     {
@@ -153,11 +146,12 @@ public class Board : IBoard
 
     private void TransformPawnToQueen(Piece piece, int toRow, int toColumn)
     {
-        if (piece.GetType() == typeof(Pawn))
+        if (piece is not Pawn pawn) return;
+        Squares[toRow, toColumn] = pawn.Color switch
         {
-            if (piece.Color == "White" && toRow == 0)
-                Squares[toRow, toColumn] = new Queen("White");
-            else if (piece.Color == "Black" && toRow == 7) Squares[toRow, toColumn] = new Queen("Black");
-        }
+            "White" when toRow == 0 => new Queen("White"),
+            "Black" when toRow == 7 => new Queen("Black"),
+            _ => Squares[toRow, toColumn]
+        };
     }
 }

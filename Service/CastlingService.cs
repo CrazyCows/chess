@@ -52,6 +52,17 @@ public class CastlingService : ICastlingService
             MovementStates[pieceInfo.color][pieceInfo.type] = true;
     }
 
+    public void ResetMovementStates()
+    {
+        var newStates = InitializeMovementStates();
+        MovementStates.Clear();
+        foreach (var kvp in newStates)
+        {
+            MovementStates[kvp.Key] = kvp.Value;
+        }
+    }
+
+
     public ICastlingService DeepCopy()
     {
         var copy = new CastlingService();

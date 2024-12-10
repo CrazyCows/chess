@@ -1,6 +1,8 @@
+using chess.Interfaces;
+
 namespace chess.Model.Pieces;
 
-public class Bishop(string Color) : Piece(Color)
+public class Bishop(string Color) : Piece(Color), ICopyableT<Piece>
 {
     public override string Symbol => Color == "White" ? "♗" : "♝";
     public override double Weight => 0.5;
@@ -29,22 +31,12 @@ public class Bishop(string Color) : Piece(Color)
                 }
 
                 moveList.Add((newPos.Item1, newPos.Item2, false));
-                //
-                //var piece = board.GetSquare(newPos);
-                //if (piece == null)
-                //{
-                //    validList.Add((newPos.Item1, newPos.Item2, false));
-                //}
-                //else
-                //{
-                //    if (piece.Color != this.Color)
-                //    {
-                //        validList.Add((newPos.Item1, newPos.Item2, true));
-                //    }
-                //    break;
-                //}
-            }
 
+            }
         return moveList;
+    }
+    public Piece Copy()
+    {
+        return new Bishop(Color);
     }
 }

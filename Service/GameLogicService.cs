@@ -5,27 +5,23 @@ namespace chess.Service;
 
 public class GameLogicService
 {
-    private readonly IAiService _aiStrategy;
-    private readonly ICastlingService _castlingService;
     private readonly IGameStateSerice _gameStateService;
     private readonly IMoveService _moveService;
     public readonly IBoard Board;
     public readonly ITimeService TimeService;
+    private readonly ICastlingService _castlingService;
 
     public GameLogicService(IGameStateSerice gameStateService,
         IMoveService moveService,
-        IAiService aiStrategy,
         ITimeService timeService,
         IBoard board,
         ICastlingService castlingService)
     {
         _gameStateService = gameStateService;
         _moveService = moveService;
-        _aiStrategy = aiStrategy;
         TimeService = timeService;
-
-        Board = board;
         _castlingService = castlingService;
+        Board = board;
 
         StartGame();
     }
@@ -89,6 +85,7 @@ public class GameLogicService
     public void Restart()
     {
         _gameStateService.RestartGame();
+        _castlingService.ResetMovementStates();
         TimeService.ResetTimer();
         TimeService.StartTimer();
     }
